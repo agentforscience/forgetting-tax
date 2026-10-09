@@ -1,0 +1,874 @@
+You are an academic paper writer. Generate a complete NEURIPS style paper
+based on the experiment results provided.
+
+════════════════════════════════════════════════════════════════════════════════
+                         IMPORTANT: BEFORE YOU START
+════════════════════════════════════════════════════════════════════════════════
+
+Before writing any content, you MUST complete these steps:
+
+1. READ THE SKILL: Review the paper-writer skill at .claude/skills/paper-writer/SKILL.md
+2. READ THE STYLE GUIDE: Study templates/paper_writing/lab_style_guide.md carefully
+3. REVIEW EXAMPLES: Browse paper_examples/ for formatting and language patterns:
+   - Look at sections/1.introduction.tex for language style
+   - Look at tables/*.tex for table formatting
+   - Look at commands/*.tex for macro usage
+4. VERIFY COMMAND TEMPLATES: Command templates (math.tex, general.tex, macros.tex) are pre-copied to paper_draft/commands/
+
+CRITICAL: Reference example papers for FORMATTING and LANGUAGE STYLE only.
+Do NOT copy content, phrasing, or narrative structure from the example papers.
+The examples are in a different research domain - focus only on presentation style.
+
+════════════════════════════════════════════════════════════════════════════════
+                            EXPERIMENT REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+# The Forgetting Tax: Knowledge Erosion Across Task Domains During Continual Instruction Tuning
+
+## 1. Executive Summary
+
+**Question.** When a small instruction-tuned LLM is fine-tuned on six tasks one after another, does
+performance on earlier tasks (H1) decay as a power law, (H2) decay 3-5x faster for reasoning tasks than
+for pattern-matching tasks, and (H3) decay disproportionately for early-learned tasks?
+
+**Answer.** None of the three parts of the hypothesis is supported as stated.
+
+- **H1 (shape): uniform degradation is clearly rejected, but a power law is not what the individual
+  curves look like.** Forgetting is front-loaded: each time training switches to a new task, old tasks
+  take a hit that is essentially complete within 20-40 optimizer steps and then stays flat for the rest
+  of the 250-step stage. A power law is the best of four candidates for the *averaged* Llama curves, but
+  it is not the best description of individual trajectories (0 of 36 clear wins against an
+  equal-parameter saturating exponential), it is not the best for the averaged Qwen curves, and at
+  step resolution a saturating exponential beats it in 6 of 6 task pairs.
+- **H2 (domain): no 3-5x gap.** On Llama-3.2-1B the reasoning/pattern forgetting ratio is 1.0-1.5
+  depending on normalisation. On Qwen2.5-1.5B the metric-based ratios are 2.2-2.6 with wide intervals
+  that do not survive multiple-comparison correction. Differences between tasks *within* a category
+  are much larger than the difference between categories.
+- **H3 (position): no reliable effect.** Once the amount of subsequent training is held fixed,
+  early-learned tasks are not forgotten more on Llama (12 runs). On Qwen (6 runs) one loss-based
+  measure shows the predicted direction, the metric-based measures do not.
+
+**Practical implication.** In this setting the "tax" is charged per task switch, almost immediately,
+and its size depends on the specific (old task, new task) pair rather than on a reasoning/pattern
+label or on how early the task was learned. Evaluating shortly after a switch already shows most of
+the damage; training longer on the new task adds little further loss.
+
+Scope: two small models (1B and 1.5B parameters), LoRA only, naive sequential fine-tuning, six tasks,
+200 test items per task. See Section 6.
+
+## 2. Research Question & Motivation
+
+Hypothesis as given: *knowledge erosion follows a power-law decay rather than uniform degradation, with
+abstract reasoning tasks (math, logic) losing performance 3-5x faster than pattern-matching tasks
+(translation, summarization), and early-learned tasks showing disproportionate forgetting compared to
+recently acquired ones.*
+
+Continual instruction-tuning benchmarks typically report one end-of-sequence average under one or two
+fixed task orders. That leaves three things unmeasured: the shape of the trajectory, whether task type
+matters independently of where the task sat in the order, and whether cross-task "rates" survive a
+change of normalisation. This study measures all three with dense trajectories and a balanced order
+design.
+
+**Literature note.** The pipeline's resource-finding stage was skipped for this run
+(`.neurico/pipeline_state.json`), so there is no `literature_review.md`, `papers/` or `code/`. The
+background in `planning.md` (TRACE, CITB, Luo et al. 2023, Scialom et al. 2022) is from general
+knowledge and was not checked against the papers in this session.
+
+## 3. Experimental Setup
+
+### Models and training
+| | |
+|---|---|
+| Main model | `meta-llama/Llama-3.2-1B-Instruct` |
+| Replication model | `Qwen/Qwen2.5-1.5B-Instruct` |
+| Method | Naive sequential fine-tuning, one LoRA adapter carried through all tasks (r=16, alpha=32, no dropout, all attention and MLP projections) |
+| Optimiser | AdamW, lr 2e-4, no weight decay, batch 16, grad-clip 1.0, constant LR with a 10-step linear warm-up at the start of every stage |
+| Schedule | 250 steps per task (2 epochs of 2,000 examples), 6 tasks, 1,500 steps per run |
+| Decoding | Greedy; bf16 autocast |
+| Hardware | 4x NVIDIA RTX A6000 (48 GB), shared; peak 28 GB per process |
+
+No API models were used: the study needs repeated fine-tuning with access to intermediate states, and
+`OPENROUTER_KEY` is not set in this environment. API cost: $0.
+
+### Tasks (2,000 train / 200 test each; prompts in `src/prep_data.py`)
+| Task | Category | Source | Metric |
+|---|---|---|---|
+| gsm8k | reasoning | GSM8K, worked solution + `Answer: n` | exact match |
+| arith | reasoning | synthetic 3-step integer arithmetic, worked steps | exact match |
+| logic | reasoning | ProofWriter (OWA, depth 1-3), True/False/Unknown | accuracy |
+| mt | pattern | WMT16 en->de | chrF |
+| summ | pattern | SAMSum | ROUGE-L F1 |
+| emotion | pattern | dair-ai/emotion, 6 classes | accuracy |
+
+`emotion` gives the pattern category an accuracy-scored task so that category is not perfectly
+confounded with metric type. The category assignment is a judgment call.
+
+### Design
+- **Orders.** 6-order Williams (balanced Latin-square) design: every task occupies every position once
+  and follows every other task once. Llama: 2 blocks of 6 orders (seed 0 canonical; seed 1 a randomly
+  relabelled square) = 12 runs. Qwen: 1 block = 6 runs.
+- **Evaluation.** Held-out per-token loss on all six test sets every 25 steps; generation metrics every
+  125 steps; zero-shot evaluation at step 0.
+- **Baselines.** Zero-shot; each task's score at the end of its own stage; joint multi-task training
+  for 1,500 steps on the mixture (Llama 2 seeds, Qwen 1 seed).
+- **Onset experiment (added, exploratory).** For six (old <- new) pairs on Llama: train old task 250
+  steps, then the new task for 100 steps, measuring old-task loss after every step up to step 20,
+  every 2 steps to 50, every 10 to 100. One seed.
+
+### Retention measures
+With zero-shot value `m0`/`L0`, value at the end of the task's own stage `m*`/`L*`, and current value:
+`R_loss = (L0-L)/(L0-L*)` (pre-registered primary for shape; 1 = just learned, 0 = zero-shot level, can
+go negative), `R_rel = m/m*`, `R_gain = (m-m0)/(m*-m0)` (only where the gain is at least 0.05).
+Reported in addition: `abs_drop = m*-m`, and `R_loss` clipped to [0,1] (added after seeing that a few
+cells far below zero-shot level dominate the unclipped mean; labelled exploratory).
+
+### Analysis (pre-registered in `planning.md` before any run)
+H1: least-squares fits of linear, exponential, power `(1+t/tau)^-b` and exponential-to-asymptote,
+compared by AICc, on mean curves and on individual trajectories. H2: ratio of category means of
+forgetting over all stage-end cells with lag >= 1, tasks weighted equally, cluster bootstrap over runs
+(10,000 resamples), plus an exact permutation test over the 20 ways of labelling 3 of 6 tasks
+"reasoning". H3: forgetting at fixed lag vs position (Spearman) and OLS of forgetting on log(1+lag),
+position and task with run-clustered errors. Deviations are logged at the end of `planning.md`.
+
+### Compute
+20 full runs, 29.5 GPU-process-hours in total; the GPUs were shared (with other users in the first
+session and among my own concurrent runs throughout), so single runs took 60-110 minutes. The work
+spans two sessions: the first was stopped by the pipeline's 4-hour limit after the 12 main runs; the
+second ran the Qwen replication, the onset experiment, and all final analysis.
+
+## 4. Results
+
+### 4.1 Baselines
+Mean task metric over the six tasks (per-task values in `results/{main,qwen}_baselines.csv`):
+
+| | Zero-shot | End of own stage | Sequential, end of run | Joint multi-task |
+|---|---|---|---|---|
+| Llama-3.2-1B (12 runs; joint 2 seeds) | 0.460 | 0.624 | 0.499 | 0.623 |
+| Qwen2.5-1.5B (6 runs; joint 1 seed) | 0.549 | 0.644 | 0.567 | 0.622 |
+
+Joint training matches the single-task level, so the sequential shortfall is forgetting and not a
+capacity limit of the adapter. Sequential training ends close to the zero-shot average: most of what
+fine-tuning added is gone by the end. Mean backward transfer is -0.150 (Llama) and -0.093 (Qwen)
+metric units.
+
+Per-task, Llama:
+
+| Task | Zero-shot | End of own stage | Sequential final (sd over runs) | Joint |
+|---|---|---|---|---|
+| gsm8k | 0.445 | 0.345 | 0.199 (0.085) | 0.302 |
+| arith | 0.920 | 0.926 | 0.825 (0.165) | 0.942 |
+| logic | 0.490 | 0.682 | 0.523 (0.179) | 0.765 |
+| mt | 0.403 | 0.491 | 0.354 (0.148) | 0.481 |
+| summ | 0.246 | 0.404 | 0.271 (0.112) | 0.395 |
+| emotion | 0.255 | 0.896 | 0.820 (0.049) | 0.852 |
+
+Fine-tuning *lowers* GSM8K accuracy below zero-shot (0.445 -> 0.345). The raw outputs show why: the
+zero-shot model writes a long step-by-step solution (mean 657 characters), the fine-tuned model imitates
+the terse GSM8K reference style (mean 231 characters) and makes more arithmetic slips. This is a
+property of the training targets, not a scoring bug, but it means gain-normalised retention is undefined
+for gsm8k and arith (no positive gain), and on Qwen also for mt.
+
+### 4.2 H1 - shape of the forgetting curve
+
+![Retention by task](figures/main_retention_by_task.png)
+
+**Mean curves, lag axis in stages (pre-registered).** dAICc relative to the best model; position-1
+tasks, 51 points per curve:
+
+| Curve | linear | exponential | power | exp+asymptote | R^2 of best |
+|---|---|---|---|---|---|
+| Llama, all tasks, R_loss (12 traj.) | 78.5 | 47.9 | **0** | 14.1 | 0.81 |
+| Llama, reasoning, R_loss | 38.3 | 14.5 | **0** | 4.2 | 0.68 |
+| Llama, pattern, R_loss | 95.4 | 70.6 | **0** | 24.7 | 0.78 |
+| Llama, all tasks, R_rel (11 points) | 27.1 | 23.6 | **0** | 5.0 | 0.94 |
+| Qwen, all tasks, R_loss (6 traj.) | 82.5 | 28.9 | 8.7 | **0** | 0.35 |
+| Qwen, reasoning, R_loss | 54.7 | 46.8 | 6.6 | **0** | 0.08 |
+| Qwen, pattern, R_loss | 61.7 | **0** | 2.6 | 1.1 | 0.49 |
+
+![H1 fits](figures/main_h1_shape_R_loss.png)
+
+Linear decay is the worst model in every row. The power law wins on the Llama averages and loses on
+the Qwen averages, where none of the four smooth curves fits well (R^2 at most 0.5).
+
+**Individual trajectories (positions 1-3).** Best model by AICc:
+
+| | linear | exponential | power | exp+asymptote |
+|---|---|---|---|---|
+| Llama, R_loss (36) | 9 | 4 | 2 | 21 |
+| Llama, R_rel (36) | 9 | 16 | 3 | 8 |
+| Qwen, R_loss (18) | 2 | 4 | 2 | 10 |
+| Qwen, R_rel (18) | 5 | 6 | 3 | 4 |
+
+Restricting to the two 2-parameter models (exploratory): on Llama the saturating exponential is
+clearly better (dAICc > 2) in 26 of 36 trajectories, the power law in 0, 10 undecided; on Qwen 9 vs 2
+with 7 undecided. So the power law describes the average better than it describes the things being
+averaged. The per-task mean curves agree: exp+asymptote is best for 5 of 6 Llama tasks and 5 of 6 Qwen
+tasks.
+
+**Why smooth curves fit poorly: forgetting comes in steps.** Across the 108 Llama stage transitions in
+which an old task's loss rose, the median share of the stage's rise that had already happened at the
+first evaluation (25 of 250 steps) is 55%, and 72% by step 50; uniform degradation predicts 10% and
+20%. Qwen: 39% and 66% (47 transitions). In 21% (Llama) and 24% (Qwen) of stage transitions an old
+task's loss went *down*, i.e. the curves are not monotone.
+
+![Within-stage](figures/main_within_stage.png)
+
+**Step-resolution onset (exploratory, Llama, 6 pairs, 1 seed).**
+
+![Onset](figures/onset.png)
+
+| Old <- new | Loss rise after 100 steps (nats/token) | Share reached by step 10 / 20 / 50 | Steps to 50% / 90% of the rise | New task: steps to 50% / 90% of its loss drop | dAICc power vs saturating exp |
+|---|---|---|---|---|---|
+| logic <- arith | 1.028 | 0.60 / 0.90 / 1.01 | 9 / 20 | 4 / 6 | +74.9 |
+| logic <- gsm8k | 0.775 | 0.29 / 0.81 / 1.00 | 16 / 24 | 6 / 26 | +38.4 |
+| summ <- mt | 0.171 | 0.01 / 0.94 / 1.00 | 17 / 20 | 4 / 34 | +15.0 |
+| mt <- summ | 0.140 | 0.08 / 0.47 / 0.85 | 22 / 70 | 5 / 22 | +21.0 |
+| gsm8k <- arith | 0.132 | 0.30 / 0.87 / 0.90 | 13 / 42 | 3 / 6 | +31.5 |
+| emotion <- arith | 0.053 | 0.37 / 0.79 / 1.05 | 12 / 26 | 4 / 6 | +52.0 |
+
+The saturating exponential is the best of the four candidates in all six pairs; linear is worst in all
+six (dAICc 32-149). Between step 50 and step 100 the old-task loss changes by at most 0.022 nats. The
+curves are in fact slightly S-shaped: almost nothing happens in the first ~5 steps, which coincides
+with the 10-step learning-rate warm-up, and forgetting lags behind learning of the new task (the new
+task reaches half of its loss drop in 3-6 steps, the old task half of its loss rise in 9-22). The
+warm-up is a property of this training recipe, so the delay may not generalise.
+
+**H1 verdict: not supported as stated.** "Not uniform" holds strongly. "Power law" holds only for
+averaged curves on one of two models. The data are better described as a rapid, saturating step at each
+task switch whose size varies by task pair; summing such steps over a balanced set of interferers
+gives a decelerating average curve that a power law fits well. That reading of the average is an
+interpretation consistent with the fits above, not something this study tested directly.
+
+### 4.3 H2 - reasoning vs pattern-matching
+
+Forgetting = 1 - retention (or absolute drop), averaged over all stage-end evaluations after at least
+one subsequent task. Ratio = reasoning / pattern, with cluster-bootstrap 95% CI over runs.
+
+| Measure | Llama: reasoning / pattern | Llama ratio [95% CI] | Qwen: reasoning / pattern | Qwen ratio [95% CI] |
+|---|---|---|---|---|
+| R_loss (pre-reg.) | 0.637 / 0.434 | 1.47 [1.05, 1.91] | 0.610 / 0.103 | 5.93 [-12.9, 32.5] |
+| R_rel (pre-reg.) | 0.286 / 0.251 | 1.14 [0.82, 1.60] | 0.210 / 0.096 | 2.18 [1.08, 3.52] |
+| R_gain (pre-reg.; gsm8k, arith and Qwen mt excluded) | 0.843 / 0.954 | 0.88 [0.39, 1.56] | 0.505 / 0.399 | 1.27 [-0.05, 3.25] |
+| abs_drop | 0.165 / 0.124 | 1.33 [0.89, 1.90] | 0.157 / 0.060 | 2.60 [1.21, 4.21] |
+| R_loss clipped to [0,1] (exploratory) | 0.349 / 0.347 | 1.01 [0.82, 1.26] | 0.453 / 0.374 | 1.21 [0.72, 1.95] |
+
+Per-task forgetting (the category means hide most of the structure):
+
+| Task | Cat. | Llama abs_drop | Llama 1-R_rel | Llama 1-R_loss | Qwen abs_drop | Qwen 1-R_rel | Qwen 1-R_loss |
+|---|---|---|---|---|---|---|---|
+| gsm8k | R | 0.153 | 0.435 | 0.264 | 0.104 | 0.231 | 0.954 |
+| arith | R | 0.168 | 0.186 | 0.109 | 0.282 | 0.288 | 0.562 |
+| logic | R | 0.173 | 0.239 | 1.536 | 0.084 | 0.111 | 0.313 |
+| mt | P | 0.167 | 0.338 | 0.940 | 0.027 | 0.057 | -0.044 |
+| summ | P | 0.139 | 0.341 | 0.236 | 0.034 | 0.100 | 0.215 |
+| emotion | P | 0.066 | 0.073 | 0.126 | 0.120 | 0.131 | 0.138 |
+
+Reading the table:
+
+- **Llama.** The only interval that excludes 1 is unclipped R_loss (bootstrap one-sided p = 0.016,
+  Holm-adjusted over the three pre-registered measures 0.049). It is carried by one task: `logic`
+  spends 43% of its cells *below zero-shot level* in loss terms, and without `logic` the ratio is 0.43.
+  Clipping gives 1.01. The task-label permutation test gives p = 0.7. No measure comes near 3.
+  In metric terms the reasoning tasks and two of the three pattern tasks lose about the same
+  (0.14-0.17); only `emotion` is robust.
+- **Qwen.** The metric-based ratios are above 2 and their intervals exclude 1 (one-sided p = 0.019 for
+  R_rel, 0.017 for abs_drop) and overlap [3, 5]; after Holm correction over the three pre-registered
+  measures the R_rel result is p = 0.057. Task-label permutation p = 0.2-0.3 (the smallest attainable
+  value with 6 tasks is 0.1). The unclipped loss ratio of 5.9 is not interpretable: Qwen barely
+  improves on mt and gsm8k in loss terms (L0 - L* = 0.033 and 0.078 nats), so the normalisation divides
+  by nearly zero, as the interval shows.
+- The largest metric drop on Qwen is `arith` (0.282), the smallest are `mt` and `summ` (about 0.03) -
+  but Qwen also gained almost nothing on mt from fine-tuning, so there was little to lose.
+
+**H2 verdict: not supported.** A 3-5x gap is absent on Llama under every normalisation. Qwen shows a
+roughly 2-2.6x gap on metric-based measures that is suggestive but not robust to correction, to the
+choice of normalisation, or to treating tasks (rather than runs) as the unit of generalisation. With
+three tasks per category, this study cannot separate "reasoning vs pattern" from "these particular
+tasks".
+
+### 4.4 H3 - serial position
+
+End-of-sequence retention does rise with position on both models (Llama R_rel: 0.60, 0.65, 0.77, 0.72,
+0.83 for positions 1-5), but position and amount of subsequent training are the same thing there. The
+tests below hold lag fixed.
+
+| | Llama (12 runs) | Qwen (6 runs) |
+|---|---|---|
+| Lag-1 forgetting by position 1-5, R_loss clipped | 0.31, 0.21, 0.23, 0.38, 0.20 | 0.55, 0.51, 0.29, 0.23, 0.15 |
+| Spearman position vs lag-1 forgetting, R_loss clipped (task-demeaned) | rho = -0.06, p = 0.65 | rho = -0.47, p = 0.009 |
+| Same, R_rel | rho = 0.02, p = 0.87 | rho = -0.18, p = 0.34 |
+| Same, R_loss unclipped | rho = -0.12, p = 0.37 | rho = -0.35, p = 0.055 |
+| OLS position coefficient, R_loss clipped [95% CI] | -0.001 [-0.028, 0.026] | -0.073 [-0.138, -0.009] |
+| OLS position coefficient, R_rel | -0.019 [-0.063, 0.025] | -0.019 [-0.047, 0.009] |
+| OLS log(1+lag) coefficient, R_rel | 0.154 [0.015, 0.294] | -0.039 [-0.206, 0.128] |
+
+A negative position coefficient is the direction H3 predicts (earlier-learned = more forgetting at the
+same lag). Llama shows nothing. Qwen shows the predicted direction on the clipped loss measure and the
+same sign but no significance on the metric measure; these p-values are uncorrected across four
+measures and two models, and cluster-robust errors with six clusters are unreliable.
+
+A second difference between the models: on Llama forgetting keeps accumulating with lag, on Qwen it
+does not measurably do so after the first subsequent task (lag coefficient near zero).
+
+![H3](figures/main_h3_position.png)
+
+**H3 verdict: not supported on Llama; inconclusive on Qwen.** The visible end-of-run disadvantage of
+early tasks is explained by their longer exposure to interference on Llama.
+
+### 4.5 What does predict forgetting? Pair structure and output format
+
+Mean loss-based retention lost by an old task (row) during one stage of training on a new task
+(column), Llama:
+
+| old \ new | gsm8k | arith | logic | mt | summ | emotion |
+|---|---|---|---|---|---|---|
+| gsm8k | | 0.21 | 0.17 | 0.03 | 0.04 | 0.05 |
+| arith | 0.00 | | 0.16 | -0.05 | -0.09 | 0.14 |
+| logic | 1.11 | 1.63 | | -0.57 | 0.91 | -0.18 |
+| mt | -0.01 | -0.04 | 0.14 | | 0.78 | 0.83 |
+| summ | -0.03 | 0.02 | 0.13 | 0.17 | | 0.12 |
+| emotion | -0.02 | 0.19 | 0.04 | 0.02 | 0.02 | |
+
+A handful of pairs carry most of the forgetting (logic after arith/gsm8k/summ; mt after summ/emotion),
+and some pairs produce recovery (logic after mt). On Llama same-category pairs average 0.435 against
+0.039 for cross-category pairs, but this rests on those few cells and does not replicate on Qwen
+(-0.219 vs 0.023, where the mt row is distorted by the near-zero loss denominator). The Qwen matrix is
+in `results/qwen_interference_matrix.csv`; there `logic` is the most damaging *interferer* rather than
+the most damaged task.
+
+**Error analysis: format vs content.** Using the raw generations stored at stage ends, each output was
+checked for having the requested form (e.g. contains `Answer:`; is one of the allowed labels; is not an
+echo of the source).
+
+| Task | Llama: format valid, just learned -> later | Llama: score given valid format, just learned -> later | Qwen: format valid, just learned -> later |
+|---|---|---|---|
+| gsm8k | 0.99 -> 0.70 | 0.35 -> 0.21 | 1.00 -> 0.75 |
+| arith | 1.00 -> 0.73 | 0.93 -> 0.79 | 1.00 -> 0.68 |
+| logic | 1.00 -> 0.73 | 0.68 -> 0.61 | 1.00 -> 0.96 |
+| mt | 0.99 -> 0.62 | 0.49 -> 0.36 | 1.00 -> 0.99 |
+| summ | 1.00 -> 0.75 | 0.40 -> 0.28 | 1.00 -> 0.96 |
+| emotion | 1.00 -> 0.87 | 0.90 -> 0.84 | 1.00 -> 0.99 |
+
+On Llama every task loses its output format in 13-38% of later outputs, and the score also falls among
+outputs that keep the format, so both interface and content erode. On Qwen format loss is confined to
+the two tasks with multi-line worked answers. Typical failure after a later task has been trained
+(`results/main_example_outputs.json`): the arithmetic answer is written as prose without the `Answer:`
+line after summarisation training; a GSM8K problem is paraphrased instead of solved.
+
+### 4.6 Output locations
+`results/runs/*.jsonl` raw per-evaluation records incl. generations at stage ends ·
+`results/summary_{main,qwen}.json`, `results/extra_{main,qwen}.json`, `results/onset_summary.json` all
+statistics quoted here · `results/*_trajectories.csv` long-format table · `figures/` ·
+`results/partial_killed/` partial files of runs that were killed by out-of-memory in the first session
+and restarted from scratch (not used in any analysis).
+
+## 5. Discussion
+
+**Against expectations.** The hypothesis pictured forgetting as a smooth process in training time with a
+task-type-specific rate. What the trajectories show instead is an event-driven process: a switch of
+training distribution causes a fast, bounded shift, after which continued training on the same new task
+does little further harm. A "rate per step" is then not a natural quantity; "loss per switch, by pair"
+is.
+
+**Why the power law appears in averages.** The Llama average is well fit by a power law with a small
+exponent, and so would be many decelerating curves. The equal-parameter comparison on individual
+trajectories and the step-resolution experiment both favour saturation. I did not run a simulation
+showing that the observed mixture of steps reproduces the averaged power-law fit, so this remains the
+most economical reading rather than a demonstrated mechanism.
+
+**Model dependence.** The two models disagree on which tasks are fragile (Llama: logic, mt; Qwen: arith,
+gsm8k), on whether forgetting accumulates with lag, and on the category ratio. Any claim of a universal
+reasoning-vs-pattern constant would need many more tasks and models than are here.
+
+**Normalisation matters.** The same Llama data give a category ratio from 0.88 to 1.47 depending on the
+measure, and the same Qwen data from 1.2 to 5.9. Loss-normalised retention breaks down when fine-tuning
+barely changes a task's loss. Cross-task forgetting numbers quoted without their normalisation are not
+comparable.
+
+## 6. Limitations
+
+- **Scale and method.** 1B and 1.5B models, LoRA r=16, one learning rate, 250 steps per task, no
+  replay or regularisation. The planned full-fine-tuning ablation was cancelled (GPU contention, then
+  time), so nothing here speaks to full fine-tuning or to larger models.
+- **Tasks.** Six tasks, three per category, with a debatable category assignment; tasks are the real
+  unit of generalisation for H2 and there are too few for a powerful test.
+- **Gains were small or negative for some tasks.** Fine-tuning hurt gsm8k accuracy and did not improve
+  arith (both models) or mt (Qwen). Forgetting of something that was barely learned is hard to define;
+  gain-normalised results rest on 3-4 tasks.
+- **Test size.** 200 items per task: single accuracy differences below about 7 points are within
+  sampling error; conclusions rest on aggregates over runs.
+- **Seeds and orders are not separated.** The two Llama blocks differ in both seed and order set; Qwen
+  has one block and one joint-baseline seed.
+- **Onset experiment.** One seed, six hand-picked pairs (chosen partly because they showed strong
+  interference in the main runs), Llama only, losses only. The S-shaped start coincides with the LR
+  warm-up and was not tested without it.
+- **Curve fitting.** All four pre-registered models are monotone and start at 1; real trajectories are
+  non-monotone in over 20% of transitions. AICc treats the 51 points of a mean curve as independent,
+  which they are not, so the dAICc magnitudes overstate certainty; the win counts are the safer evidence.
+- **Exploratory analyses.** The clipped loss measure, within-stage fits, equal-parameter comparison,
+  sensitivity checks and the onset experiment were added after seeing the main results and are labelled
+  as such.
+- **Format-validity heuristics** are simple string rules and were not validated by hand beyond spot
+  checks.
+- **Reproducibility.** Runs are seeded, but out-of-memory handling changes micro-batch sizes, so
+  floating-point summation order can differ between repeats; exact bit-level reproduction is not
+  expected. No training run was repeated to measure this. The analysis scripts are deterministic and
+  were re-run with identical output.
+- **No literature review** was available in this run (see Section 2).
+
+## 7. Conclusions & Next Steps
+
+In naive sequential LoRA instruction tuning of two small LLMs, forgetting is neither uniform nor well
+described as a per-task power law: it arrives as a fast, saturating hit at each task switch. Reasoning
+tasks are not forgotten 3-5x faster than pattern-matching tasks (about 1x on Llama, about 2x with wide
+uncertainty on Qwen), and early-learned tasks are not forgotten disproportionately once exposure is
+controlled on Llama. Which specific task follows which is the strongest visible determinant.
+
+Follow-ups, in order of value:
+1. Repeat the onset experiment without warm-up, at several learning rates, with more seeds and on
+   Qwen, to see whether the saturation time scales with learning rate (as a step-size effect would).
+2. Test whether the per-switch hit is predictable from the gradient or representation overlap between
+   the two tasks, which the pair matrix suggests.
+3. Run 15-20 tasks per category so that category can be tested with tasks as the unit.
+4. Reinstate the full-fine-tuning ablation and add a larger model.
+5. Simulate averaged curves from the fitted per-switch steps to check directly whether aggregation
+   alone reproduces the power-law fit.
+
+## References
+- Cobbe et al. 2021, GSM8K. · Tafjord et al. 2021, ProofWriter. · Bojar et al. 2016, WMT16. ·
+  Gliwa et al. 2019, SAMSum. · Saravia et al. 2018, CARER (dair-ai/emotion).
+- Wang et al. 2023, TRACE. · Zhang et al. 2023, CITB. · Luo et al. 2023, An Empirical Study of
+  Catastrophic Forgetting in LLMs during Continual Fine-tuning. · Scialom et al. 2022. (Cited from
+  memory; not re-read in this run.)
+- Hu et al. 2021, LoRA. · Williams 1949, balanced cross-over designs.
+- Software: Python 3.14.2, PyTorch 2.14.1 (CUDA 13.0), transformers 5.19.0, peft 0.21.2, SciPy 1.18.1,
+  statsmodels 0.15.0, NumPy 2.5.3, pandas 3.0.6; full list in `requirements.txt` / `uv.lock`.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                            RESEARCH PLAN
+════════════════════════════════════════════════════════════════════════════════
+
+# Planning: The Forgetting Tax
+
+Written before any training run. The analysis plan in "Statistical Analysis Plan" is the
+pre-registration; deviations are logged at the bottom.
+
+## Motivation & Novelty Assessment
+
+### Why This Research Matters
+Instruction-tuned LLMs are updated sequentially in practice (new tasks, new customers, new data).
+Each update silently erodes earlier skills. Practitioners budget for this with a single number
+("average forgetting"), but if erosion has a characteristic *shape* over time and differs by *kind of
+skill*, then replay budgets, evaluation schedules and task ordering can be planned far better.
+
+### Gap in Existing Work
+Note: the resource-finding stage was skipped for this run (`.neurico/pipeline_state.json` says
+`"skipped": true`), so there is no `literature_review.md`, `papers/` or `code/`. The following is from
+my own knowledge of the literature, not from a fresh review.
+- Continual instruction-tuning benchmarks (TRACE, Wang et al. 2023; CITB, Zhang et al. 2023;
+  Luo et al. 2023 "An Empirical Study of Catastrophic Forgetting in LLMs during Continual
+  Fine-tuning"; Scialom et al. 2022) report *end-of-stream* averages (average accuracy, backward
+  transfer). They rarely report the forgetting *trajectory* at sub-task resolution, and do not fit
+  functional forms to it.
+- Task order is usually fixed (one or two orders), so "which task type forgets more" is confounded
+  with "which task came first".
+- Different tasks are scored with different metrics, so cross-domain "rate" comparisons depend on an
+  unstated normalisation.
+
+### Our Novel Contribution
+1. Dense forgetting trajectories (evaluation every 50 gradient steps) so decay *shape* can be tested
+   by model comparison (linear vs exponential vs power law).
+2. A Williams (balanced Latin-square) order design: every task appears at every position once and
+   follows every other task once, which de-confounds task domain from learning position.
+3. Rate comparison between reasoning and pattern-matching tasks under three explicit normalisations,
+   including a metric-free one (held-out loss).
+
+### Experiment Justification
+- **Exp 1 (main, sequential LoRA, Llama-3.2-1B-Instruct, 6 orders x 2 seeds):** provides the
+  trajectories all three sub-hypotheses are tested on.
+- **Exp 2 (baselines: zero-shot and joint multi-task training):** zero-shot is the floor needed to
+  define "learned gain"; joint training shows whether drops are forgetting or mere capacity limits.
+- **Exp 3 (replication on Qwen2.5-1.5B-Instruct, 6 orders):** are conclusions model-specific?
+- **Exp 4 (ablation: full fine-tuning instead of LoRA, 6 orders):** are conclusions specific to the
+  low-rank adapter?
+
+## Research Question
+During sequential instruction tuning on six tasks, (H1) does retained performance on a previously
+learned task decay as a power law in the amount of subsequent training, rather than linearly
+("uniform degradation") or exponentially? (H2) Do reasoning tasks (math, logic) lose performance
+3-5x faster than pattern-matching tasks (translation, summarisation)? (H3) Are early-learned tasks
+forgotten disproportionately, i.e. more than their longer exposure to interference explains?
+
+## Hypothesis Decomposition
+- **H1 (shape).** IV: interfering gradient steps `t` since the task's own stage ended (0..1250).
+  DV: retention `R(t)`. Candidates: linear `1-at` (1 param), exponential `exp(-t/tau)` (1),
+  power law `(1+t/tau)^-b` (2), exponential-to-asymptote `c+(1-c)exp(-t/tau)` (2, a fair
+  2-parameter competitor). Supported if the power law has the lowest AICc in a clear majority of
+  task-level mean curves AND beats the 2-parameter exponential.
+- **H2 (domain).** IV: task category. DV: forgetting rate. Supported if the reasoning/pattern ratio
+  of mean forgetting has a bootstrap 95% CI that lies inside or overlaps [3, 5] and excludes 1,
+  consistently across normalisations. A ratio >1 but well outside [3,5] is "direction right,
+  magnitude wrong".
+- **H3 (position).** IV: serial position 1..6. Final retention vs position is necessarily
+  confounded with lag (earlier = more interference), so the "disproportionate" claim is tested by
+  (a) forgetting at a *fixed* lag (after exactly one subsequent task) as a function of position, and
+  (b) a regression of retention on log(1+lag), position and task with run-clustered errors.
+  Supported if position has a negative effect on retention beyond lag.
+
+## Proposed Methodology
+### Approach
+Real sequential fine-tuning of open instruction-tuned LLMs on local GPUs (4x RTX A6000). API models
+cannot be continually fine-tuned with trajectory access, so no API models are used (and
+`OPENROUTER_KEY` is not set in this environment).
+
+### Tasks (2000 train / 200 test each; `src/prep_data.py`)
+| Task | Category | Source | Metric |
+|---|---|---|---|
+| gsm8k | reasoning | GSM8K, worked solution + answer | exact-match accuracy |
+| arith | reasoning | synthetic 3-step integer arithmetic | exact-match accuracy |
+| logic | reasoning | ProofWriter OWA, depth 1-3, 3-way | accuracy |
+| mt | pattern | WMT16 en->de (newstest2015 train / 2016 test) | chrF |
+| summ | pattern | SAMSum | ROUGE-L F1 |
+| emotion | pattern | dair-ai/emotion, 6-way | accuracy |
+
+`emotion` is included so that the pattern category has an accuracy-scored task; otherwise category
+would be perfectly confounded with metric type. The reasoning/pattern assignment is a judgment call;
+results are also reported per task.
+
+### Experimental Steps
+1. Zero-shot evaluation of the base model on all six test sets.
+2. Sequential training: for each order, train task 1 for 250 steps (batch 16 = 2 epochs), then task
+   2, ... with a single LoRA adapter carried through (r=16, alpha=32, all attention+MLP projections,
+   lr 2e-4, AdamW, **constant** LR after a 10-step warm-up per stage so that interference per step is
+   not modulated by a schedule). No replay, no regularisation (naive SeqFT, the standard lower bound).
+3. Every 50 steps: held-out per-token loss on all six test sets and greedy-decoded task metrics.
+4. Orders: 6-order Williams design; seed 2 uses a randomly relabelled Williams square.
+5. Joint baseline: 1500 steps on the mixture of all six tasks.
+6. Replication on Qwen2.5-1.5B-Instruct and full-fine-tuning ablation (lr 1e-5), 6 orders each.
+
+### Baselines
+Zero-shot base model (floor), joint multi-task training (upper bound), each task's own
+end-of-stage performance (per-trajectory reference).
+
+### Evaluation Metrics
+For task i in a run, with `m0` zero-shot score, `m*` the score at the end of its own stage, `m(t)`
+after `t` further steps:
+- **Gain-normalised retention** `R_gain = (m(t)-m0)/(m*-m0)` (fraction of learned gain kept; only
+  defined where `m*-m0` is non-trivial; trajectories with gain < 0.05 are excluded and counted).
+- **Relative retention** `R_rel = m(t)/m*`.
+- **Loss-based retention** `R_loss = (L0-L(t))/(L0-L*)` using held-out per-token NLL: metric-free and
+  comparable across tasks. This is the primary measure for H1 because it is continuous.
+- Forgetting at lag k = `1 - R` after k subsequent tasks; standard final-forgetting / BWT as well.
+
+### Statistical Analysis Plan
+- H1: non-linear least squares on task-level mean curves and on individual trajectories; AICc and
+  win counts; residual plots. alpha = 0.05 throughout.
+- H2: ratio of category means of forgetting (averaged over lags 1-5, each task weighted equally),
+  cluster bootstrap over runs (10,000 resamples), under all three normalisations; plus
+  per-task table so the reader can see whether one task drives the category effect.
+- H3: fixed-lag comparison with Spearman correlation and the regression above (cluster-robust by
+  run); position x lag is only partially crossed, stated as a limitation.
+- Multiple comparisons: Holm correction across the three normalisations within each hypothesis.
+- No conclusions from individual 200-example test deltas < ~7 points (binomial SE ~3.5 points).
+
+## Expected Outcomes
+Supporting: power law wins AICc; ratio CI inside [3,5]; negative position effect beyond lag.
+Refuting: exponential/linear fit as well or better; ratio near 1, reversed, or dominated by a single
+task; no position effect once lag is controlled.
+
+## Timeline and Milestones
+Setup+data 30 min (done) | implementation + smoke test 40 min | main runs ~60-90 min on 4 GPUs |
+replication + ablation ~60 min | analysis 45 min | report 30 min.
+
+## Potential Challenges
+- Small learned gain on tasks the base model already does well (mt, gsm8k) makes `R_gain` noisy ->
+  loss-based retention is primary; exclusions are counted and reported.
+- /data has ~9 GB free: no checkpoints are saved; only JSON results.
+- 200 test items per task: coarse for accuracy; mitigated by 12 runs and loss-based measure.
+
+## Success Criteria
+All planned runs complete, each sub-hypothesis receives a clear supported / not supported /
+inconclusive verdict with uncertainty, and negative results are reported as such.
+
+## Deviations from plan
+(appended during execution)
+- (before any run, after the smoke test) Evaluation cadence changed from "loss and generation every
+  50 steps" to "held-out loss every 25 steps, generation metrics every 125 steps (mid-stage and
+  end-of-stage)". Reason: generation costs ~45 s per evaluation point; loss costs ~3 s. H1 (shape)
+  therefore rests on the loss trajectories (51 points per lag axis) with the generation metrics as a
+  coarser (11-point) check.
+- (before any run) Full-fine-tuning ablation learning rate set to 2e-5 instead of 1e-5 so that 250
+  steps are enough to learn each task.
+- (before any run) Generation budgets for gsm8k/arith raised to 320/160 tokens: the smoke test showed
+  the verbose zero-shot answers for arith were truncated at 48 tokens before the final answer, which
+  would have understated the zero-shot floor.
+- The GPUs are shared with other jobs that started during setup; runs are packed onto whichever
+  GPUs have free memory, with automatic retry.
+- (during execution, 16:25) The full-fine-tuning ablation (Exp 4) was cancelled before any of its runs
+  started. Reason: the four GPUs turned out to be shared with other jobs holding ~44 GB each; LoRA runs
+  that take ~10 min on a free GPU took ~100 min, and full fine-tuning needs ~3x the memory. No
+  full-FT data exists, so this is a scope cut, not a selective omission.
+- (during execution) Two main runs and the Qwen joint baseline died with CUDA out-of-memory when a
+  neighbouring job grew; they were restarted from scratch (same seed/config). The run script was
+  changed to wait for memory instead of exiting. Because micro-batching with gradient accumulation
+  keeps the objective identical, runs differ only in floating-point summation order.
+- (second session, 18:40) The first session was terminated by the pipeline's 4-hour limit after all 12
+  main runs and one joint run had finished but before the Qwen replication, the final analysis or the
+  report. A second session resumed from the saved per-run JSONL files; nothing was re-run or discarded.
+  The Qwen replication (Exp 3, 6 orders, as planned) was run in the second session. The full-FT ablation
+  stays cancelled (time).
+- (second session, after seeing the main results; exploratory, not pre-registered) Two additions:
+  (i) `src/analyze_extra.py`: within-stage curve shape, equal-parameter per-trajectory model comparison,
+  seed-block and leave-one-task-out sensitivity of the H2 ratio; (ii) `src/run_onset.py` /
+  `src/analyze_onset.py`: a step-resolution experiment on six (old task <- new task) pairs, because the
+  25-step evaluation grid turned out to be too coarse to resolve the onset of forgetting. A first attempt
+  to get this resolution by re-running two full sequences with evaluation every 5 steps was aborted after
+  10 minutes (projected > 8 h) and its partial files deleted; no results from it are used.
+
+
+════════════════════════════════════════════════════════════════════════════════
+                          LITERATURE REVIEW
+════════════════════════════════════════════════════════════════════════════════
+
+No literature_review.md found
+
+════════════════════════════════════════════════════════════════════════════════
+                          PAPER REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+Generate a complete academic paper with the following structure:
+
+1. TITLE
+   - Clear, specific, informative
+   - Should convey main finding or contribution
+
+2. AUTHOR
+   - Use this exact author line in the \author{} block: NeuriCo
+
+3. ABSTRACT (150-250 words)
+   - Problem statement
+   - Approach
+   - Key results
+   - Significance
+
+4. INTRODUCTION
+   - Research problem and motivation
+   - Gap in existing work
+   - Our contribution (be specific)
+   - Paper organization
+
+5. RELATED WORK
+   - Organized by theme/approach
+   - Position our work relative to prior work
+   - Cite papers from literature review
+
+6. METHODOLOGY
+   - Clear description of approach
+   - Experimental setup
+   - Datasets used
+   - Evaluation metrics
+   - Baselines
+
+7. RESULTS
+   - Present results with tables and figures
+   - Statistical analysis
+   - Comparison to baselines
+   - Ablation studies (if applicable)
+
+8. DISCUSSION
+   - Interpretation of results
+   - Limitations
+   - Broader implications
+
+9. CONCLUSION
+   - Summary of contributions
+   - Key findings
+   - Future work
+
+10. REFERENCES
+   - BibTeX format
+   - All cited papers
+
+════════════════════════════════════════════════════════════════════════════════
+                          OUTPUT FORMAT
+════════════════════════════════════════════════════════════════════════════════
+
+Create a MODULAR LaTeX project with the following directory structure:
+
+paper_draft/
+├── main.tex              # Main file that imports all sections
+├── references.bib        # BibTeX references
+├── sections/
+│   ├── abstract.tex      # Abstract content
+│   ├── introduction.tex  # Introduction section
+│   ├── related_work.tex  # Related work section
+│   ├── methodology.tex   # Methodology section
+│   ├── results.tex       # Results section
+│   ├── discussion.tex    # Discussion section
+│   └── conclusion.tex    # Conclusion section
+├── figures/              # Directory for any generated figures
+├── tables/               # Directory for complex standalone tables
+└── appendix/             # Directory for appendix sections (if needed)
+
+INSTRUCTIONS:
+1. First, create the directory structure above (mkdir -p paper_draft/sections paper_draft/figures paper_draft/tables paper_draft/appendix)
+2. Write main.tex using the EXACT preamble for NEURIPS:
+
+   \documentclass{article}
+   \usepackage[final]{neurips_2025}  % NEURIPS style (neurips_2025.sty is in paper_draft/)
+   \usepackage[hidelinks]{hyperref}  % REQUIRED: clickable links
+   \usepackage{booktabs}  % REQUIRED: professional tables
+   \usepackage{graphicx}
+   \usepackage{amsmath,amssymb}
+
+   % Import command files
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+   % Use this bibliography style:
+   \bibliographystyle{plainnat}
+
+   \author{NeuriCo}
+
+   - Use \input{sections/...} to include each section
+   - Use \bibliography{references} for references
+3. Write each section file with COMPLETE content (no placeholders)
+4. Each section file should include its \section{} command
+5. Write references.bib with all citations in BibTeX format
+6. After writing all files, compile the paper:
+   cd paper_draft && pdflatex -interaction=nonstopmode main.tex && bibtex main && pdflatex -interaction=nonstopmode main.tex && pdflatex -interaction=nonstopmode main.tex
+
+This modular structure allows humans to easily:
+- Edit individual sections without navigating a large file
+- Track changes per section
+- Reuse sections across different paper versions
+
+════════════════════════════════════════════════════════════════════════════════
+                          QUALITY REQUIREMENTS
+════════════════════════════════════════════════════════════════════════════════
+
+- Academic tone throughout
+- All claims must be supported by data from the experiment report
+- Proper citations using \cite{} commands
+- Clear figures and tables with proper captions
+- NO placeholder text - every section must have real content
+- The paper MUST compile without errors
+- If compilation fails, debug and fix the LaTeX errors
+
+════════════════════════════════════════════════════════════════════════════════
+                          LAB WRITING STYLE
+════════════════════════════════════════════════════════════════════════════════
+
+Follow these lab-specific conventions to match our paper style:
+
+1. LANGUAGE STYLE:
+   - Use active voice: "We propose", "We examine", "We focus on"
+   - Be direct and confident: "Our main question is...", "We hypothesize that..."
+   - State things clearly and simply - prefer plain language over jargon
+   - Use bold questions as paragraph organizers: {\bf what is X?}
+   - Include specific quantitative claims: "8.97% over baseline"
+   - Avoid fancy wording: "utilize" → "use", "facilitate" → "help"
+
+2. INTRODUCTION STRUCTURE:
+   - Engaging hook (get to the point quickly)
+   - Problem importance
+   - Gap identification
+   - Your approach with method figure reference
+   - Quantitative preview of results
+   - Contribution bullets (3-4 items, action verbs)
+
+3. CONTRIBUTION LISTS:
+   \begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+       \item We propose...
+       \item We conduct...
+       \item We complement...
+   \end{itemize}
+
+4. MODULAR COMMANDS STRUCTURE:
+   Command templates are pre-copied to paper_draft/commands/:
+   - math.tex: Math notation macros
+   - general.tex: Formatting macros
+   - macros.tex: Project-specific term definitions (customize this for your paper)
+
+   In main.tex, include:
+   \input{commands/math}
+   \input{commands/general}
+   \input{commands/macros}
+
+5. REFERENCE CONVENTIONS:
+   Use reference macros from math.tex:
+   - \figref{fig:name} for "figure 1" (lowercase, in-sentence)
+   - \Figref{fig:name} for "Figure 1" (capitalized, start of sentence)
+   - \secref{sec:name} for "section 2"
+
+6. TEXT FORMATTING:
+   - Use \para{Header text} for bold paragraph headers
+   - Define method/dataset names with \textsc and \xspace:
+     \newcommand{\methodname}{\textsc{MethodName}\xspace}
+
+7. TABLE FORMATTING:
+   - Use booktabs package (no vertical lines)
+   - Use \resizebox{\textwidth}{!}{...} for wide tables
+   - Use @{} to remove padding at table edges
+   - Use \cmidrule(lr){x-y} for sub-headers
+   - Use \textsc{} for dataset/method names in headers
+   - Bold best results with {\bf ...}
+
+8. FIGURE FORMATTING:
+   - Use 0.32\textwidth for 3-column subfigures
+   - Use 0.95\linewidth for full-width figures
+   - Use \input{figures/legend} for shared legends
+   - Write self-contained captions explaining key observations
+
+9. RESULTS PRESENTATION:
+   - Define \increase and \decrease for colored arrows (green up, red down)
+   - Bold best results in tables
+   - Report confidence intervals when available
+
+10. ALGORITHM STYLING:
+    - Use algpseudocode with [noend]
+    - Use \triangleright for comments
+
+11. HYPERLINKS (REQUIRED):
+    - Always use \usepackage[hidelinks]{hyperref} or with colored links
+    - All citations, section refs, figure refs, table refs must be clickable
+    - This is essential for reader navigation
+
+════════════════════════════════════════════════════════════════════════════════
+                          WORKFLOW: REVIEW AND REFLECT
+════════════════════════════════════════════════════════════════════════════════
+
+Before calling finish, you MUST complete these review steps:
+
+1. REVIEW RESOURCES (at the start):
+   - Read .claude/skills/paper-writer/SKILL.md for detailed guidance
+   - Study templates/paper_writing/lab_style_guide.md for style conventions
+   - Browse paper_examples/ for formatting and language patterns
+
+2. SELF-REFLECTION (before finishing):
+   After writing all sections, review your work against these criteria:
+
+   LANGUAGE CHECK:
+   - [ ] Is the writing clear and jargon-free?
+   - [ ] Are claims specific with quantitative support?
+   - [ ] Is active voice used throughout?
+
+   FORMATTING CHECK:
+   - [ ] Does main.tex include \input{commands/math}, \input{commands/general}, \input{commands/macros}?
+   - [ ] Is hyperref package included for clickable references?
+   - [ ] Do tables use booktabs (no vertical lines)?
+   - [ ] Are best results bolded in tables?
+   - [ ] Are figures/tables properly captioned?
+
+   STRUCTURE CHECK:
+   - [ ] Does introduction follow: hook → importance → gap → approach → preview → contributions?
+   - [ ] Are contribution bullets specific with action verbs?
+   - [ ] Does the paper compile without errors?
+
+3. FIX ISSUES:
+   - Address any issues found in the self-reflection
+   - Re-compile and verify the PDF looks correct
+
+Only after completing this review should you consider the paper finished.

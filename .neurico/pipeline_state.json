@@ -1,0 +1,30 @@
+{
+  "created_at": "2026-10-08T19:04:54.220840Z",
+  "stages": {
+    "resource_finder": {
+      "status": "completed",
+      "completed_at": "2026-10-08T23:40:29.994070Z",
+      "success": true,
+      "outputs": {
+        "skipped": true
+      }
+    },
+    "experiment_runner": {
+      "status": "completed",
+      "started_at": "2026-10-08T23:40:30.023689Z",
+      "completed_at": "2026-10-09T01:24:45.608243Z",
+      "success": true,
+      "outputs": {
+        "success": true,
+        "return_code": 0,
+        "elapsed_time": 6255.545263528824,
+        "log_file": "/data/summereunann/neurico-workspaces/the_forgetting_tax__quantifyin_20261008_140421_d7646a6c/logs/execution_claude.log",
+        "transcript_file": "/data/summereunann/neurico-workspaces/the_forgetting_tax__quantifyin_20261008_140421_d7646a6c/logs/execution_claude_transcript.jsonl",
+        "background_processes_terminated": false
+      }
+    }
+  },
+  "current_stage": null,
+  "completed": true,
+  "completed_at": "2026-10-09T01:24:45.632000Z"
+}

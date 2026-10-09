@@ -1,0 +1,20 @@
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{@{}lccc@{}}
+        \toprule
+        & \multicolumn{2}{c}{\llama} & \qwen \\
+        \cmidrule(lr){2-3} \cmidrule(lr){4-4}
+        \textbf{Task} & \textbf{Format valid} & \textbf{Score given valid format} & \textbf{Format valid} \\
+        \midrule
+        \tgsm & 0.99 $\rightarrow$ 0.70 & 0.35 $\rightarrow$ 0.21 & 1.00 $\rightarrow$ 0.75 \\
+        \tarith & 1.00 $\rightarrow$ 0.73 & 0.93 $\rightarrow$ 0.79 & 1.00 $\rightarrow$ 0.68 \\
+        \tlogic & 1.00 $\rightarrow$ 0.73 & 0.68 $\rightarrow$ 0.61 & 1.00 $\rightarrow$ 0.96 \\
+        \tmt & 0.99 $\rightarrow$ 0.62 & 0.49 $\rightarrow$ 0.36 & 1.00 $\rightarrow$ 0.99 \\
+        \tsumm & 1.00 $\rightarrow$ 0.75 & 0.40 $\rightarrow$ 0.28 & 1.00 $\rightarrow$ 0.96 \\
+        \temo & 1.00 $\rightarrow$ 0.87 & 0.90 $\rightarrow$ 0.84 & 1.00 $\rightarrow$ 0.99 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Format versus content. Each entry is (just learned $\rightarrow$ after later tasks). ``Format valid'' is the share of outputs with the requested form (\eg contains \texttt{Answer:}, is one of the allowed labels, is not an echo of the source). On \llama both the output format and the score among well-formatted outputs erode.}
+    \label{tab:format}
+\end{table}

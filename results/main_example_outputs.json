@@ -1,0 +1,122 @@
+[
+ {
+  "run": "main_arith-gsm8k-emotion-mt-logic-summ_s1",
+  "task": "arith",
+  "learned_at_position": 1,
+  "last_task_trained": "summ",
+  "prompt_tail": "Evaluate the arithmetic expression step by step, then give the final result on the last line as 'Answer: <number>'.\n\n(93 - 72) * 8 + 996",
+  "reference": "1164",
+  "output_right_after_learning": "93 - 72 = 21\n21 * 8 = 168\n168 + 996 = 1164\nAnswer: 1164",
+  "output_at_end_of_sequence": "The expression is 21 * 8 + 996. The result is 168 + 996 = 1164."
+ },
+ {
+  "run": "main_arith-gsm8k-emotion-mt-logic-summ_s1",
+  "task": "gsm8k",
+  "learned_at_position": 2,
+  "last_task_trained": "summ",
+  "prompt_tail": "ber of cakes. On Wednesday she went to another store and bought 5 times the number of cakes she did on Tuesday. How many cakes did she buy after all three days?",
+  "reference": "76",
+  "output_right_after_learning": "On Tuesday, she bought 4 * 3 = 12 cakes.\nOn Wednesday, she bought 12 * 5 = 60 cakes.\nSo, she bought 4 + 12 + 60 = 76 cakes.\nAnswer: 76",
+  "output_at_end_of_sequence": "On Monday she bought 4 cakes. On Tuesday she bought 3 times that number of cakes. On Wednesday she bought 5 times the number of cakes she did on Tuesday. So she bought 3*4=12 cakes on Tuesday. 4*5=20 cakes on Wednesday. So in total she bought 12+20+4=36 cakes."
+ },
+ {
+  "run": "main_arith-logic-gsm8k-mt-emotion-summ_s0",
+  "task": "arith",
+  "learned_at_position": 1,
+  "last_task_trained": "summ",
+  "prompt_tail": "Evaluate the arithmetic expression step by step, then give the final result on the last line as 'Answer: <number>'.\n\n(93 - 72) * 8 + 996",
+  "reference": "1164",
+  "output_right_after_learning": "93 - 72 = 21\n21 * 8 = 168\n168 + 996 = 1164\nAnswer: 1164",
+  "output_at_end_of_sequence": "First subtract 72 from 93 to get 21.\nThen multiply 21 by 8 to get 168.\nThen add 996 to 168 to get 1064.\nAnswer: 1064"
+ },
+ {
+  "run": "main_arith-logic-gsm8k-mt-emotion-summ_s0",
+  "task": "logic",
+  "learned_at_position": 2,
+  "last_task_trained": "summ",
+  "prompt_tail": "oo. Cold, young people are also certain to be rough people. When somebody is red, blue and round, you can bet they are also rough.\n\nStatement: Harry is not red.",
+  "reference": "False",
+  "output_right_after_learning": "False",
+  "output_at_end_of_sequence": "False"
+ },
+ {
+  "run": "main_emotion-arith-logic-gsm8k-summ-mt_s1",
+  "task": "emotion",
+  "learned_at_position": 1,
+  "last_task_trained": "mt",
+  "prompt_tail": "swer with a single word.\n\nText: i like doing reviews and i got this from target a few days ago so i feel its acceptable to review this for all you makeup lovers",
+  "reference": "joy",
+  "output_right_after_learning": "joy",
+  "output_at_end_of_sequence": "joy"
+ },
+ {
+  "run": "main_emotion-arith-logic-gsm8k-summ-mt_s1",
+  "task": "arith",
+  "learned_at_position": 2,
+  "last_task_trained": "mt",
+  "prompt_tail": "Evaluate the arithmetic expression step by step, then give the final result on the last line as 'Answer: <number>'.\n\n(93 - 72) * 8 + 996",
+  "reference": "1164",
+  "output_right_after_learning": "93 - 72 = 21\n21 * 8 = 168\n168 + 996 = 1164\nAnswer: 1164",
+  "output_at_end_of_sequence": "93 - 72 = 21\n21 * 8 = 168\n168 + 996 = 1164\nAnswer: 1164"
+ },
+ {
+  "run": "main_emotion-gsm8k-summ-arith-mt-logic_s0",
+  "task": "emotion",
+  "learned_at_position": 1,
+  "last_task_trained": "logic",
+  "prompt_tail": "swer with a single word.\n\nText: i like doing reviews and i got this from target a few days ago so i feel its acceptable to review this for all you makeup lovers",
+  "reference": "joy",
+  "output_right_after_learning": "joy",
+  "output_at_end_of_sequence": "joy"
+ },
+ {
+  "run": "main_emotion-gsm8k-summ-arith-mt-logic_s0",
+  "task": "gsm8k",
+  "learned_at_position": 2,
+  "last_task_trained": "logic",
+  "prompt_tail": "ber of cakes. On Wednesday she went to another store and bought 5 times the number of cakes she did on Tuesday. How many cakes did she buy after all three days?",
+  "reference": "76",
+  "output_right_after_learning": "On Tuesday she bought 4 * 3 = 12 cakes.\nOn Wednesday she bought 12 * 5 = 60 cakes.\nSo she bought 4 + 12 + 60 = 76 cakes.\nAnswer: 76",
+  "output_at_end_of_sequence": "4 + 3(4) + 5(4) = 4 + 12 + 20 = 36\nAnswer: 36"
+ },
+ {
+  "run": "main_gsm8k-arith-emotion-logic-summ-mt_s0",
+  "task": "gsm8k",
+  "learned_at_position": 1,
+  "last_task_trained": "mt",
+  "prompt_tail": "ber of cakes. On Wednesday she went to another store and bought 5 times the number of cakes she did on Tuesday. How many cakes did she buy after all three days?",
+  "reference": "76",
+  "output_right_after_learning": "On Tuesday, she bought 4 x 3 = 12 cakes.\nOn Wednesday, she bought 12 x 5 = 60 cakes.\nTherefore, she bought 4 + 12 + 60 = 76 cakes.\nAnswer: 76",
+  "output_at_end_of_sequence": "Rose bought 4 cakes on Monday, 3*4=12 cakes on Tuesday, and 5*12=60 cakes on Wednesday. 4+12+60=76 cakes."
+ },
+ {
+  "run": "main_gsm8k-arith-emotion-logic-summ-mt_s0",
+  "task": "arith",
+  "learned_at_position": 2,
+  "last_task_trained": "mt",
+  "prompt_tail": "Evaluate the arithmetic expression step by step, then give the final result on the last line as 'Answer: <number>'.\n\n(93 - 72) * 8 + 996",
+  "reference": "1164",
+  "output_right_after_learning": "93 - 72 = 21\n21 * 8 = 168\n168 + 996 = 1164\nAnswer: 1164",
+  "output_at_end_of_sequence": "93 - 72 = 21\n21 * 8 = 168\n168 + 996 = 1164"
+ },
+ {
+  "run": "main_gsm8k-mt-arith-summ-emotion-logic_s1",
+  "task": "gsm8k",
+  "learned_at_position": 1,
+  "last_task_trained": "logic",
+  "prompt_tail": "ber of cakes. On Wednesday she went to another store and bought 5 times the number of cakes she did on Tuesday. How many cakes did she buy after all three days?",
+  "reference": "76",
+  "output_right_after_learning": "On Tuesday, she bought 4 * 3 = 12 cakes.\nOn Wednesday, she bought 12 * 5 = 60 cakes.\nSo, she bought 4 + 12 + 60 = 76 cakes.\nAnswer: 76",
+  "output_at_end_of_sequence": "Answer: 4"
+ },
+ {
+  "run": "main_gsm8k-mt-arith-summ-emotion-logic_s1",
+  "task": "mt",
+  "learned_at_position": 2,
+  "last_task_trained": "logic",
+  "prompt_tail": "English text into German.\n\nThe world championship runner-up stressed before the start of the decisive seven overseas races \"that I've got nothing more to lose\".",
+  "reference": "Der WM-Zweite betonte vor dem Start in die entscheidenden sieben Übersee-Rennen, \"dass ich nichts mehr zu verlieren habe\".",
+  "output_right_after_learning": "Der Weltmeister vor dem Start der entscheidenden sieben Läufe sagte, \"dass ich noch alles verlieren kann\".",
+  "output_at_end_of_sequence": "The world championship runner-up stressed before the start of the decisive seven overseas races \"that I've got nothing more to lose\"."
+ }
+]

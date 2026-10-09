@@ -1,0 +1,131 @@
+{
+ "within_stage": {
+  "n_trajectories": 30,
+  "all tasks": {
+   "best": "power",
+   "daicc": {
+    "linear": 36.38,
+    "power": 0.0,
+    "saturating exp": 0.53,
+    "logarithmic": 4.49
+   },
+   "power_exponent": 0.058104251581501724,
+   "loss_increase_at_stage_end": 0.10663060226660369
+  },
+  "gsm8k": {
+   "best": "power",
+   "daicc": {
+    "linear": 3.79,
+    "power": 0.0,
+    "saturating exp": 4.31,
+    "logarithmic": 2.34
+   },
+   "power_exponent": 0.4736018069862203,
+   "loss_increase_at_stage_end": 0.04962022198939242
+  },
+  "arith": {
+   "best": "logarithmic",
+   "daicc": {
+    "linear": 27.55,
+    "power": 1.67,
+    "saturating exp": 4.5,
+    "logarithmic": 0.0
+   },
+   "power_exponent": 0.33374766347222234,
+   "loss_increase_at_stage_end": 0.12053610154212427
+  },
+  "logic": {
+   "best": "saturating exp",
+   "daicc": {
+    "linear": 22.93,
+    "power": 0.05,
+    "saturating exp": 0.0,
+    "logarithmic": 6.5
+   },
+   "power_exponent": 0.0010000000000000005,
+   "loss_increase_at_stage_end": 0.23383553414046765
+  },
+  "mt": {
+   "best": "linear",
+   "daicc": {
+    "linear": 0.0,
+    "power": 4.0,
+    "saturating exp": 4.29,
+    "logarithmic": 4.29
+   },
+   "power_exponent": 1.0679273574758115,
+   "loss_increase_at_stage_end": 0.04387100941245481
+  },
+  "summ": {
+   "best": "power",
+   "daicc": {
+    "linear": 13.49,
+    "power": 0.0,
+    "saturating exp": 7.87,
+    "logarithmic": 2.5
+   },
+   "power_exponent": 0.37854230052222027,
+   "loss_increase_at_stage_end": 0.05981883589462922
+  },
+  "emotion": {
+   "best": "saturating exp",
+   "daicc": {
+    "linear": 50.09,
+    "power": 0.34,
+    "saturating exp": 0.0,
+    "logarithmic": 24.65
+   },
+   "power_exponent": 0.0010000000000000002,
+   "loss_increase_at_stage_end": 0.13210191062055376
+  },
+  "per_trajectory_wins": {
+   "linear": 2,
+   "power": 8,
+   "saturating exp": 11,
+   "logarithmic": 1
+  },
+  "per_trajectory_power_exponent_quartiles": [
+   0.0030272845703307703,
+   0.07996565979198879,
+   0.811517313404511
+  ],
+  "per_trajectory_share_sublinear(b<1)": 0.7727272727272727
+ },
+ "per_trajectory_2param": {
+  "power": 2,
+  "exp+asymptote": 9,
+  "undecided(|dAICc|<2)": 7
+ },
+ "h2_sensitivity": {
+  "seed_block_0": {
+   "R_loss": {
+    "reasoning": 0.6097690187875705,
+    "pattern": 0.10282267671901797,
+    "ratio": 5.930297073026774
+   },
+   "R_loss_clip": {
+    "reasoning": 0.45292129085856897,
+    "pattern": 0.37386291039661845,
+    "ratio": 1.2114635559277067
+   },
+   "R_rel": {
+    "reasoning": 0.2098115592641161,
+    "pattern": 0.09617893351831737,
+    "ratio": 2.1814710518094618
+   },
+   "abs_drop": {
+    "reasoning": 0.15666666666666665,
+    "pattern": 0.0603339547045799,
+    "ratio": 2.59665833996415
+   }
+  },
+  "leave_one_task_out_R_loss_ratio": {
+   "gsm8k": 4.255416555146481,
+   "arith": 6.162364836887826,
+   "logic": 7.373109827046013,
+   "mt": 3.4556597204124007,
+   "summ": 12.98167370863669,
+   "emotion": 7.170266227052904
+  }
+ }
+}

@@ -1,0 +1,20 @@
+\begin{table}[t]
+    \centering
+    \small
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}llll@{}}
+        \toprule
+        \textbf{Task} & \textbf{Category} & \textbf{Source} & \textbf{Metric} \\
+        \midrule
+        \tgsm & reasoning & GSM8K~\cite{cobbe2021training}, worked solution + \texttt{Answer: n} & exact match \\
+        \tarith & reasoning & synthetic 3-step integer arithmetic, worked steps & exact match \\
+        \tlogic & reasoning & ProofWriter~\cite{tafjord2021proofwriter} (open-world, depth 1--3), 3-way & accuracy \\
+        \tmt & pattern & WMT16 en$\rightarrow$de~\cite{bojar2016findings} & chrF~\cite{popovic2015chrf} \\
+        \tsumm & pattern & SAMSum~\cite{gliwa2019samsum} & ROUGE-L F1~\cite{lin2004rouge} \\
+        \temo & pattern & dair-ai/emotion~\cite{saravia2018carer}, 6 classes & accuracy \\
+        \bottomrule
+    \end{tabular}
+    }
+    \caption{The six tasks. Each has 2{,}000 training and 200 test examples. \temo gives the pattern category an accuracy-scored task, so category is not perfectly confounded with metric type.}
+    \label{tab:tasks}
+\end{table}

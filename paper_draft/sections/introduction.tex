@@ -1,0 +1,45 @@
+\section{Introduction}
+\label{sec:intro}
+
+Every time we fine-tune an instruction-tuned language model on a new task, it loses some of what it learned before.
+We call this loss the \emph{forgetting tax}.
+Practitioners pay it routinely: models are updated in sequence for new tasks, new customers, and new data, and each update silently erodes earlier skills~\cite{mccloskey1989catastrophic,luo2023empirical}.
+
+To plan around the tax, we need to know how it is charged.
+If erosion has a characteristic shape over training time, we can schedule evaluation and replay around it.
+If some kinds of skill erode faster than others, we can protect those first.
+If skills learned early are more fragile, we can choose the task order.
+A single ``average forgetting'' number answers none of these questions.
+
+Existing continual instruction-tuning benchmarks mostly report that single number.
+They typically give an end-of-sequence average and a backward-transfer score under one or two fixed task orders~\cite{wang2023trace,zhang2023citb,scialom2022fine,luo2023empirical}.
+This leaves three things unmeasured.
+First, the \emph{shape} of the forgetting trajectory between task boundaries.
+Second, whether \emph{task type} matters independently of where the task sat in the order: with a fixed order, ``which task type forgets more'' and ``which task came first'' are the same comparison.
+Third, whether cross-task forgetting ``rates'' survive a change of \emph{normalization}, given that different tasks are scored with different metrics.
+
+We address these gaps by testing a concrete, three-part hypothesis.
+{\bf H1 (shape):} retained performance on an old task decays as a power law in the amount of subsequent training, not uniformly.
+{\bf H2 (domain):} reasoning tasks (math, logic) lose performance 3--5$\times$ faster than pattern-matching tasks (translation, summarization).
+{\bf H3 (position):} early-learned tasks are forgotten disproportionately, beyond what their longer exposure to interference explains.
+We fine-tune \llama and \qwen with a single LoRA adapter on six tasks in sequence.
+We use a Williams balanced Latin-square design, in which every task occupies every position once and follows every other task once, and we evaluate held-out loss on all tasks every 25 optimizer steps.
+We fixed the analysis plan before any training run and label every later addition as exploratory.
+
+None of the three parts holds as stated.
+Forgetting is clearly not uniform, but individual trajectories do not look like power laws: each task switch produces a hit that is largely complete within 20--40 optimizer steps and then stays flat for the rest of the 250-step stage (see \figref{fig:onset}).
+On \llama, a median 55\% of a stage's loss rise has already happened at the first evaluation, 25 steps in, where uniform degradation predicts 10\%.
+A power law is the best of four candidates for the \emph{averaged} \llama curves, but it clearly beats an equal-parameter saturating exponential in 0 of 36 individual trajectories.
+The reasoning/pattern forgetting ratio is 1.0--1.5 on \llama depending on the normalization; on \qwen the metric-based ratios are 2.2--2.6 with wide intervals.
+With lag held fixed, serial position has no measurable effect on \llama.
+What does predict forgetting is the specific pair: a handful of (old task, new task) combinations carry most of the damage.
+
+In summary, we make the following contributions:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=0pt]
+    \item We measure dense forgetting trajectories for two small instruction-tuned models under a balanced order design that separates task identity from learning position (18 sequential runs, plus zero-shot and joint-training baselines).
+    \item We show that forgetting is front-loaded at each task switch and saturates within tens of steps, and that a power law describes averaged curves better than it describes the trajectories being averaged.
+    \item We show that the reasoning/pattern forgetting ratio ranges from 0.88 to 1.47 on \llama and from 1.2 to 5.9 on \qwen depending only on the normalization, and that no measure supports a robust 3--5$\times$ gap.
+    \item We show that the end-of-sequence disadvantage of early-learned tasks on \llama is explained by their longer exposure to interference, and that pair structure and loss of output format account for much of the observed erosion.
+\end{itemize}
+
+We review related work in \secref{sec:related}, describe the design in \secref{sec:method}, report results in \secref{sec:results}, and discuss implications and limitations in \secref{sec:discussion}.

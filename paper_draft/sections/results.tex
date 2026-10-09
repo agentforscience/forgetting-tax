@@ -1,0 +1,170 @@
+\section{Results}
+\label{sec:results}
+
+\subsection{Baselines: Sequential Training Loses Most of What It Gains}
+\label{sec:baselines}
+
+\input{tables/baselines}
+
+\Tabref{tab:baselines} compares sequential training with the baselines.
+Joint training matches the end-of-own-stage level (0.623 vs.\ 0.624 on \llama; 0.622 vs.\ 0.644 on \qwen), so the sequential shortfall is forgetting and not a capacity limit of the adapter.
+Sequential training ends close to the zero-shot average (0.499 vs.\ 0.460 on \llama; 0.567 vs.\ 0.549 on \qwen): most of what fine-tuning added is gone by the end of the run.
+Mean backward transfer is $-0.150$ metric units on \llama and $-0.093$ on \qwen.
+
+One baseline result shapes the rest of the analysis.
+Fine-tuning \emph{lowers} \tgsm accuracy below zero-shot on \llama (0.445 $\rightarrow$ 0.345).
+The raw outputs show why: the zero-shot model writes a long step-by-step solution (mean 657 characters), while the fine-tuned model imitates the terse GSM8K reference style (mean 231 characters) and makes more arithmetic slips.
+This is a property of the training targets, not a scoring bug.
+It means that \rgain is undefined for \tgsm and \tarith, which show no positive gain, and on \qwen also for \tmt (per-task \qwen values are in \tabref{tab:qwen_baselines}).
+
+\subsection{H1: Forgetting Is a Fast Step at Each Switch, Not a Power Law}
+\label{sec:h1}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/main_retention_by_task.png}
+    \caption{Retention by task on \llama, averaged over orders and positions (solid: reasoning; dashed: pattern; bands: s.e.m.). \figleft~Loss-based retention, every 25 steps. \figcenter~Relative metric retention. \figright~Gain-normalized retention (\tlogic, \tmt, \tsumm, \temo only). Several curves drop sharply right after a stage boundary (integer lags) and are flat, or even rising, for long stretches in between. \tlogic falls below zero-shot level in loss terms soon after the first switch.}
+    \label{fig:retention}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/main_h1_shape_R_loss.png}
+    \caption{H1 fits to mean \rloss curves of position-1 tasks on \llama. The power law has the lowest AICc in all three panels, but the data points show steps at stage boundaries that no smooth monotone curve captures.}
+    \label{fig:h1}
+\end{figure}
+
+\input{tables/h1_mean}
+\input{tables/h1_traj}
+
+{\bf Does the mean curve follow a power law?}
+On \llama, yes; on \qwen, no.
+\Tabref{tab:h1_mean} shows that linear decay is the worst model in every row, so uniform degradation is clearly rejected.
+The power law wins all four \llama mean curves, with a margin of 4.2 to 24.7 AICc units over the saturating exponential.
+On \qwen it wins none, and none of the four smooth curves fits well ($R^2 \leq 0.49$).
+\Figref{fig:h1} shows the \llama fits.
+
+{\bf Do individual trajectories follow a power law?}
+No.
+\Tabref{tab:h1_traj} shows that the power law has the lowest AICc in only 2 of 36 \llama trajectories and 2 of 18 \qwen trajectories under \rloss.
+The power law and the exponential-to-asymptote both have two parameters, so we also compare just these two (exploratory).
+On \llama the saturating exponential is clearly better ($\daicc > 2$) in 26 of 36 trajectories, the power law in 0, with 10 undecided; on \qwen the counts are 9, 2, and 7.
+The per-task mean curves agree: the exponential-to-asymptote is best for 5 of 6 tasks on each model.
+The power law therefore describes the average better than it describes the things being averaged.
+
+{\bf Why do smooth curves fit poorly?}
+Because forgetting comes in steps (\figref{fig:retention}).
+We take all stage transitions in which an old task's loss rose by more than 0.02 nats over the stage (108 on \llama, 47 on \qwen).
+On \llama the median share of the stage's rise that had already happened at the first evaluation, 25 of 250 steps in, is 55\%, and 72\% by step 50.
+Uniform degradation predicts 10\% and 20\%.
+On \qwen the shares are 39\% and 66\%.
+The curves are also not monotone: in 21\% (\llama) and 24\% (\qwen) of all stage transitions an old task's loss went \emph{down} by more than 0.01 nats.
+\Figref{fig:within} shows the mean loss increase within the first interfering stage.
+On this within-stage mean the best fit is a power law with a very small exponent (0.07), which is itself close to a step; per trajectory, the saturating exponential wins most often (26 of 54, against 18 for the power law).
+At 25-step resolution the two forms are hard to tell apart, which motivated the onset experiment.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.95\linewidth]{figures/main_within_stage.png}
+    \caption{Forgetting within the first interfering stage on \llama (exploratory). \figleft~Mean increase in old-task loss with four fits; almost all of the increase is present at the first evaluation point. \figright~The same by task. The step is large for \tlogic and \temo and small for \tgsm, \tarith, and \tmt.}
+    \label{fig:within}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/onset.png}
+    \caption{Onset of forgetting at step resolution (exploratory; \llama, six pairs, one seed). \figleft~Increase in old-task loss during the first 100 steps on a new task; the shaded region is the 10-step learning-rate warm-up. \figcenter~The same, normalized by the 100-step increase, on a log axis; the dotted line is uniform degradation. \figright~Forgetting of the old task against learning of the new task; forgetting lags behind learning.}
+    \label{fig:onset}
+\end{figure}
+
+\input{tables/onset}
+
+{\bf What does the onset look like at step resolution?}
+\Figref{fig:onset} and \tabref{tab:onset} show the six pairs.
+The saturating exponential is the best of the four candidates in all six pairs, and linear is the worst in all six (\daicc 32--149).
+Between step 50 and step 100 the old-task loss changes by at most 0.022 nats.
+The curves are slightly S-shaped: almost nothing happens in the first $\sim$5 steps, which coincides with the 10-step warm-up.
+Forgetting also lags behind learning: the new task reaches half of its loss drop in 3--6 steps, the old task half of its loss rise in 9--22.
+The warm-up is a property of our training recipe, so the delay may not generalize.
+
+\para{Verdict on H1: not supported as stated.}
+``Not uniform'' holds strongly.
+``Power law'' holds only for averaged curves on one of two models.
+The data are better described as a rapid, saturating step at each task switch whose size varies by task pair.
+Summing such steps over a balanced set of interferers would give a decelerating average curve that a power law fits well; this reading is consistent with the fits above, but we did not test it directly.
+
+\subsection{H2: No 3--5$\times$ Gap Between Reasoning and Pattern Tasks}
+\label{sec:h2}
+
+\input{tables/h2_ratio}
+\input{tables/h2_pertask}
+
+\Tabref{tab:h2_ratio} gives the category ratio under five measures, and \tabref{tab:h2_pertask} gives the per-task values behind it.
+
+\para{\llama.}
+No measure comes near 3.
+The only interval that excludes 1 is unclipped \rloss (ratio 1.47; bootstrap one-sided $p = 0.016$, Holm-adjusted $p = 0.049$ over the three pre-registered measures).
+One task carries this result: \tlogic spends 43\% of its cells \emph{below zero-shot level} in loss terms, and without \tlogic the ratio is 0.43.
+Clipping gives 1.01.
+The task-label permutation test gives $p = 0.7$.
+In metric terms the three reasoning tasks and two of the three pattern tasks lose about the same (0.14--0.17); only \temo is robust.
+
+\para{\qwen.}
+The metric-based ratios are above 2, and their intervals exclude 1 (one-sided $p = 0.019$ for \rrel and $0.017$ for \absdrop) and overlap $[3, 5]$.
+After Holm correction the \rrel result is $p = 0.057$.
+The task-label permutation test gives $p = 0.2$--$0.3$; the smallest attainable value with six tasks is 0.1.
+The unclipped loss ratio of 5.93 is not interpretable: \qwen barely improves on \tmt and \tgsm in loss terms ($L_0 - L^* = 0.033$ and $0.078$ nats), so the normalization divides by nearly zero, as the interval $[-12.9, 32.5]$ shows.
+The largest metric drop on \qwen is \tarith (0.282) and the smallest are \tmt and \tsumm (about 0.03), but \qwen also gained almost nothing on \tmt from fine-tuning, so there was little to lose.
+
+\para{Verdict on H2: not supported.}
+A 3--5$\times$ gap is absent on \llama under every normalization.
+\qwen shows a roughly 2.2--2.6$\times$ gap on metric-based measures that is suggestive but not robust to correction, to the choice of normalization, or to treating tasks instead of runs as the unit of generalization.
+With three tasks per category, we cannot separate ``reasoning vs.\ pattern'' from ``these particular tasks''.
+
+\subsection{H3: No Reliable Effect of Serial Position}
+\label{sec:h3}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\linewidth]{figures/main_h3_position.png}
+    \caption{H3 on \llama, using unclipped \rloss. \figleft~Forgetting at fixed lag against serial position; H3 predicts lines sloping down to the right, which we do not see. \figcenter~End-of-sequence retention rises with position, but position and lag are confounded there. \figright~Mean forgetting by position and lag.}
+    \label{fig:h3}
+\end{figure}
+
+\input{tables/h3}
+
+End-of-sequence retention does rise with position on both models; on \llama, \rrel is 0.60, 0.65, 0.77, 0.72, and 0.83 for positions 1--5 (\figref{fig:h3}, center).
+But there, position and amount of subsequent training are the same thing.
+\Tabref{tab:h3} holds lag fixed.
+
+\llama shows no position effect on any measure: the Spearman correlations are between $-0.12$ and $0.02$, and both OLS position coefficients have intervals centered near zero.
+\qwen shows the predicted direction on the clipped loss measure ($\rho = -0.47$, $p = 0.009$; OLS coefficient $-0.073$) and the same sign without significance on the metric measure.
+These $p$-values are uncorrected across measures and models, and cluster-robust errors with six clusters are unreliable.
+
+The two models also differ in how forgetting accumulates.
+On \llama forgetting keeps growing with lag (log-lag coefficient 0.154 for \rrel).
+On \qwen it does not measurably grow after the first subsequent task (coefficient $-0.039$, interval spanning zero).
+
+\para{Verdict on H3: not supported on \llama; inconclusive on \qwen.}
+On \llama the visible end-of-run disadvantage of early tasks is explained by their longer exposure to interference.
+
+\subsection{What Does Predict Forgetting? Pair Structure and Output Format}
+\label{sec:pairs}
+
+\input{tables/interference}
+\input{tables/format}
+
+\para{Pair structure.}
+\Tabref{tab:interference} shows how much retention each old task loses during one stage of each new task on \llama.
+A handful of pairs carry most of the forgetting: \tlogic after \tarith, \tgsm, or \tsumm, and \tmt after \tsumm or \temo.
+Some pairs produce recovery, such as \tlogic after \tmt ($-0.57$).
+On \llama, same-category pairs average 0.435 against 0.039 for cross-category pairs.
+This contrast rests on those few cells and does not replicate on \qwen ($-0.219$ vs.\ 0.023), where the \tmt row is distorted by the near-zero loss denominator.
+On \qwen, \tlogic is the most damaging \emph{interferer} and not the most damaged task (\tabref{tab:qwen_interference}).
+
+\para{Format versus content.}
+We check each stored generation for the requested output form (\tabref{tab:format}).
+On \llama every task loses its output format in 13--38\% of later outputs, and the score also falls among outputs that keep the format.
+Both the interface and the content erode.
+On \qwen, format loss is confined to \tgsm and \tarith, the two tasks with multi-line worked answers.
+Typical failures after a later task has been trained are an arithmetic answer written as prose without the \texttt{Answer:} line after summarization training, and a GSM8K problem that is paraphrased instead of solved.

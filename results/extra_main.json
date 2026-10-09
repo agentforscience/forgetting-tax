@@ -1,0 +1,153 @@
+{
+ "within_stage": {
+  "n_trajectories": 60,
+  "all tasks": {
+   "best": "power",
+   "daicc": {
+    "linear": 53.35,
+    "power": 0.0,
+    "saturating exp": 11.81,
+    "logarithmic": 11.34
+   },
+   "power_exponent": 0.07220147545322339,
+   "loss_increase_at_stage_end": 0.23907818487896174
+  },
+  "gsm8k": {
+   "best": "power",
+   "daicc": {
+    "linear": 26.43,
+    "power": 0.0,
+    "saturating exp": 14.46,
+    "logarithmic": 4.46
+   },
+   "power_exponent": 0.3213147357315021,
+   "loss_increase_at_stage_end": 0.07067626440821581
+  },
+  "arith": {
+   "best": "power",
+   "daicc": {
+    "linear": 21.99,
+    "power": 0.0,
+    "saturating exp": 9.27,
+    "logarithmic": 1.7
+   },
+   "power_exponent": 0.2767191301201599,
+   "loss_increase_at_stage_end": 0.034540418805276044
+  },
+  "logic": {
+   "best": "saturating exp",
+   "daicc": {
+    "linear": 43.64,
+    "power": 0.14,
+    "saturating exp": 0.0,
+    "logarithmic": 18.08
+   },
+   "power_exponent": 0.0010000000000000185,
+   "loss_increase_at_stage_end": 0.46083966172486546
+  },
+  "mt": {
+   "best": "power",
+   "daicc": {
+    "linear": 31.68,
+    "power": 0.0,
+    "saturating exp": 11.7,
+    "logarithmic": 2.98
+   },
+   "power_exponent": 0.41281797739352494,
+   "loss_increase_at_stage_end": 0.0894333688599622
+  },
+  "summ": {
+   "best": "power",
+   "daicc": {
+    "linear": 31.83,
+    "power": 0.0,
+    "saturating exp": 11.68,
+    "logarithmic": 1.45
+   },
+   "power_exponent": 0.2558731910514469,
+   "loss_increase_at_stage_end": 0.2542720913019549
+  },
+  "emotion": {
+   "best": "power",
+   "daicc": {
+    "linear": 48.42,
+    "power": 0.0,
+    "saturating exp": 3.3,
+    "logarithmic": 15.18
+   },
+   "power_exponent": 0.03387175103384048,
+   "loss_increase_at_stage_end": 0.524707304173496
+  },
+  "per_trajectory_wins": {
+   "linear": 7,
+   "power": 18,
+   "saturating exp": 26,
+   "logarithmic": 3
+  },
+  "per_trajectory_power_exponent_quartiles": [
+   0.0010000000000113698,
+   0.19078590901052944,
+   0.49317317461792975
+  ],
+  "per_trajectory_share_sublinear(b<1)": 0.9259259259259259
+ },
+ "per_trajectory_2param": {
+  "power": 0,
+  "exp+asymptote": 26,
+  "undecided(|dAICc|<2)": 10
+ },
+ "h2_sensitivity": {
+  "seed_block_0": {
+   "R_loss": {
+    "reasoning": 0.7451020889833128,
+    "pattern": 0.40889894108056857,
+    "ratio": 1.8222157460576536
+   },
+   "R_loss_clip": {
+    "reasoning": 0.36993661102174596,
+    "pattern": 0.34886226053193364,
+    "ratio": 1.0604087999019407
+   },
+   "R_rel": {
+    "reasoning": 0.29247782094696934,
+    "pattern": 0.23845829425340836,
+    "ratio": 1.2265365810096531
+   },
+   "abs_drop": {
+    "reasoning": 0.1704444444444444,
+    "pattern": 0.11885119308340313,
+    "ratio": 1.434099566209958
+   }
+  },
+  "seed_block_1": {
+   "R_loss": {
+    "reasoning": 0.5279453989271633,
+    "pattern": 0.45906002634034965,
+    "ratio": 1.1500574404963364
+   },
+   "R_loss_clip": {
+    "reasoning": 0.32871195649362545,
+    "pattern": 0.34514549836232566,
+    "ratio": 0.9523866255052567
+   },
+   "R_rel": {
+    "reasoning": 0.28026918670863843,
+    "pattern": 0.263065144718108,
+    "ratio": 1.0653984092380073
+   },
+   "abs_drop": {
+    "reasoning": 0.15888888888888886,
+    "pattern": 0.1284264228840453,
+    "ratio": 1.237197808058142
+   }
+  },
+  "leave_one_task_out_R_loss_ratio": {
+   "gsm8k": 1.8958390539903038,
+   "arith": 2.0740735286126686,
+   "logic": 0.43022913732159346,
+   "mt": 3.5208917382421854,
+   "summ": 1.194132728147243,
+   "emotion": 1.082319183097874
+  }
+ }
+}

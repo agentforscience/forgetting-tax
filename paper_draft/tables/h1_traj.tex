@@ -1,0 +1,16 @@
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        \textbf{Trajectories (positions 1--3)} & \textbf{Linear} & \textbf{Exponential} & \textbf{Power} & \textbf{Exp+asymptote} \\
+        \midrule
+        \llama, \rloss (36) & 9 & 4 & 2 & {\bf 21} \\
+        \llama, \rrel (36) & 9 & {\bf 16} & 3 & 8 \\
+        \qwen, \rloss (18) & 2 & 4 & 2 & {\bf 10} \\
+        \qwen, \rrel (18) & 5 & {\bf 6} & 3 & 4 \\
+        \bottomrule
+    \end{tabular}
+    \caption{H1 on individual trajectories: number of trajectories for which each model has the lowest AICc. Most frequent winner in {\bf bold}. The power law is the least frequent winner, or tied for it, in every row.}
+    \label{tab:h1_traj}
+\end{table}

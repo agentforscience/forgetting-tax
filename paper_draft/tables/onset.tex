@@ -1,0 +1,20 @@
+\begin{table}[t]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}lccccc@{}}
+        \toprule
+        & \textbf{Loss rise after} & \textbf{Share of rise reached} & \textbf{Old task: steps to} & \textbf{New task: steps to} & \textbf{\daicc, power vs.} \\
+        \textbf{Old $\leftarrow$ new} & \textbf{100 steps (nats/token)} & \textbf{by step 10 / 20 / 50} & \textbf{50\% / 90\% of rise} & \textbf{50\% / 90\% of drop} & \textbf{saturating exp.} \\
+        \midrule
+        \tlogic $\leftarrow$ \tarith & 1.028 & 0.60 / 0.90 / 1.01 & 9 / 20 & 4 / 6 & $+74.9$ \\
+        \tlogic $\leftarrow$ \tgsm & 0.775 & 0.29 / 0.81 / 1.00 & 16 / 24 & 6 / 26 & $+38.4$ \\
+        \tsumm $\leftarrow$ \tmt & 0.171 & 0.01 / 0.94 / 1.00 & 17 / 20 & 4 / 34 & $+15.0$ \\
+        \tmt $\leftarrow$ \tsumm & 0.140 & 0.08 / 0.47 / 0.85 & 22 / 70 & 5 / 22 & $+21.0$ \\
+        \tgsm $\leftarrow$ \tarith & 0.132 & 0.30 / 0.87 / 0.90 & 13 / 42 & 3 / 6 & $+31.5$ \\
+        \temo $\leftarrow$ \tarith & 0.053 & 0.37 / 0.79 / 1.05 & 12 / 26 & 4 / 6 & $+52.0$ \\
+        \bottomrule
+    \end{tabular}
+    }
+    \caption{Step-resolution onset of forgetting (exploratory; \llama, one seed). Positive \daicc means the saturating exponential fits better than the power law. Forgetting is mostly complete by step 20--50 and lags behind learning of the new task.}
+    \label{tab:onset}
+\end{table}

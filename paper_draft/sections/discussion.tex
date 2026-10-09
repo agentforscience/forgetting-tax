@@ -1,0 +1,62 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\para{Forgetting is event-driven.}
+The hypothesis pictured forgetting as a smooth process in training time with a task-type-specific rate.
+The trajectories show something else: a switch of training distribution causes a fast, bounded shift, after which continued training on the same new task does little further harm.
+A ``rate per step'' is then not a natural quantity; ``loss per switch, by pair'' is.
+For practice, this means that evaluating shortly after a switch already shows most of the damage, and that training longer on the new task adds little further loss in our setting.
+
+\para{Why does a power law appear in averages?}
+The \llama average is well fit by a power law with a small exponent, and so would be many decelerating curves.
+The equal-parameter comparison on individual trajectories and the step-resolution experiment both favor saturation.
+This matches the known result that averaging can produce power-like curves from components that are not power laws~\cite{anderson1997artifactual}.
+We did not run a simulation showing that the observed mixture of steps reproduces the averaged power-law fit, so this remains the most economical reading and not a demonstrated mechanism.
+
+\para{The two models disagree.}
+\llama and \qwen disagree on which tasks are fragile (\llama: \tlogic and \tmt; \qwen: \tarith and \tgsm), on whether forgetting accumulates with lag, and on the category ratio.
+Any claim of a universal reasoning-vs.-pattern constant would need many more tasks and models than we have.
+
+\para{Normalization matters.}
+The same \llama data give a category ratio from 0.88 to 1.47 depending on the measure, and the same \qwen data from 1.2 to 5.9.
+Loss-normalized retention breaks down when fine-tuning barely changes a task's loss.
+Cross-task forgetting numbers quoted without their normalization are not comparable.
+
+\subsection{Limitations}
+\label{sec:limitations}
+
+\para{Scale and method.}
+We study 1B and 1.5B models with LoRA at $r{=}16$, one learning rate, 250 steps per task, and no replay or regularization.
+We planned a full-fine-tuning ablation and cancelled it before any of its runs started because of GPU contention and time, so nothing here speaks to full fine-tuning or to larger models.
+
+\para{Tasks.}
+We use six tasks, three per category, with a debatable category assignment.
+Tasks are the real unit of generalization for H2, and there are too few for a powerful test.
+Fine-tuning hurt \tgsm accuracy and did not improve \tarith (both models) or \tmt (\qwen).
+Forgetting of something that was barely learned is hard to define, and the gain-normalized results rest on 3--4 tasks.
+
+\para{Statistical power.}
+Each test set has 200 items, so single accuracy differences below about 7 points are within sampling error; our conclusions rest on aggregates over runs.
+The two \llama blocks differ in both seed and order set, so we cannot separate the two.
+\qwen has one block and one joint-baseline seed.
+
+\para{Onset experiment.}
+It uses one seed, six pairs chosen partly because they showed strong interference in the main runs, \llama only, and losses only.
+The S-shaped start coincides with the learning-rate warm-up, and we did not test it without warm-up.
+
+\para{Curve fitting.}
+All four pre-registered models are monotone and start at 1, while real trajectories are non-monotone in over 20\% of transitions.
+AICc treats the 51 points of a mean curve as independent, which they are not, so the \daicc magnitudes overstate certainty; the win counts are the safer evidence.
+
+\para{Exploratory analyses.}
+We added the clipped loss measure, the within-stage fits, the equal-parameter comparison, the sensitivity checks, and the onset experiment after seeing the main results.
+The format-validity checks are simple string rules that we validated only by spot checks.
+
+\para{Reproducibility.}
+Runs are seeded, but our out-of-memory handling changes micro-batch sizes, so floating-point summation order can differ between repeats.
+We do not expect bit-level reproduction and did not repeat a training run to measure the variation.
+The analysis scripts are deterministic.
+
+\para{Literature.}
+We did not run a systematic literature search for this study.
+Our positioning against prior work in \secref{sec:related} reflects our general knowledge of the cited papers, which we did not re-read for this study.

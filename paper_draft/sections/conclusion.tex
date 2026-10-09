@@ -1,0 +1,16 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We tested whether forgetting in continual instruction tuning follows a power law, hits reasoning tasks 3--5$\times$ harder than pattern-matching tasks, and hits early-learned tasks disproportionately.
+In naive sequential LoRA tuning of two small LLMs, none of the three holds as stated.
+Forgetting is neither uniform nor well described as a per-task power law: it arrives as a fast, saturating hit at each task switch.
+Reasoning tasks are not forgotten 3--5$\times$ faster (about 1$\times$ on \llama, about 2$\times$ with wide uncertainty on \qwen), and early-learned tasks are not forgotten disproportionately on \llama once exposure is controlled.
+Which specific task follows which is the strongest visible determinant.
+
+The key takeaway is that, in this setting, the forgetting tax is charged per task switch, almost immediately, and its size depends on the pair.
+
+Several follow-ups would sharpen this picture.
+First, we would repeat the onset experiment without warm-up, at several learning rates, with more seeds, and on \qwen, to see whether the saturation time scales with learning rate as a step-size effect would.
+Second, we would test whether the per-switch hit is predictable from gradient or representation overlap between the two tasks, as the pair matrix suggests.
+Third, we would run 15--20 tasks per category so that category can be tested with tasks as the unit, reinstate the full-fine-tuning ablation, and add a larger model.
+Finally, we would simulate averaged curves from fitted per-switch steps to check directly whether aggregation alone reproduces the power-law fit.

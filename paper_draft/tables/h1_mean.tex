@@ -1,0 +1,22 @@
+\begin{table}[t]
+    \centering
+    \small
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}lccccc@{}}
+        \toprule
+        \textbf{Mean curve} & \textbf{Linear} & \textbf{Exponential} & \textbf{Power} & \textbf{Exp+asymptote} & \textbf{$R^2$ of best} \\
+        \midrule
+        \llama, all tasks, \rloss (12 traj.) & 78.5 & 47.9 & {\bf 0} & 14.1 & 0.81 \\
+        \llama, reasoning, \rloss & 38.3 & 14.5 & {\bf 0} & 4.2 & 0.68 \\
+        \llama, pattern, \rloss & 95.4 & 70.6 & {\bf 0} & 24.7 & 0.78 \\
+        \llama, all tasks, \rrel (11 points) & 27.1 & 23.6 & {\bf 0} & 5.0 & 0.94 \\
+        \midrule
+        \qwen, all tasks, \rloss (6 traj.) & 82.5 & 28.9 & 8.7 & {\bf 0} & 0.35 \\
+        \qwen, reasoning, \rloss & 54.7 & 46.8 & 6.6 & {\bf 0} & 0.08 \\
+        \qwen, pattern, \rloss & 61.7 & {\bf 0} & 2.6 & 1.1 & 0.49 \\
+        \bottomrule
+    \end{tabular}
+    }
+    \caption{H1 on mean curves of position-1 tasks (pre-registered; lag axis in stages; 51 points per \rloss curve). Entries are \daicc relative to the best model ({\bf 0}); lower is better. The power law wins on the \llama averages and loses on the \qwen averages, where no smooth curve fits well.}
+    \label{tab:h1_mean}
+\end{table}

@@ -1,0 +1,25 @@
+\begin{table}[t]
+    \centering
+    \small
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        & \textbf{Zero-shot} & \textbf{End of own stage} & \textbf{Sequential, end of run} & \textbf{Joint multi-task} \\
+        \midrule
+        \multicolumn{5}{@{}l}{\textit{Mean over six tasks}} \\
+        \llama (12 runs; joint 2 seeds) & 0.460 & {\bf 0.624} & 0.499 & 0.623 \\
+        \qwen (6 runs; joint 1 seed) & 0.549 & {\bf 0.644} & 0.567 & 0.622 \\
+        \midrule
+        \multicolumn{5}{@{}l}{\textit{Per task, \llama}} \\
+        \tgsm & {\bf 0.445} & 0.345 & 0.199 {\scriptsize (0.085)} & 0.302 \\
+        \tarith & 0.920 & 0.926 & 0.825 {\scriptsize (0.165)} & {\bf 0.942} \\
+        \tlogic & 0.490 & 0.682 & 0.523 {\scriptsize (0.179)} & {\bf 0.765} \\
+        \tmt & 0.403 & {\bf 0.491} & 0.354 {\scriptsize (0.148)} & 0.481 \\
+        \tsumm & 0.246 & {\bf 0.404} & 0.271 {\scriptsize (0.112)} & 0.395 \\
+        \temo & 0.255 & {\bf 0.896} & 0.820 {\scriptsize (0.049)} & 0.852 \\
+        \bottomrule
+    \end{tabular}
+    }
+    \caption{Task metrics for the baselines and for sequential training at the end of the run (standard deviation over runs in parentheses). Best value per row in {\bf bold}. Joint training matches the end-of-own-stage level on average, and sequential training ends close to the zero-shot average. Fine-tuning lowers \tgsm accuracy below zero-shot.}
+    \label{tab:baselines}
+\end{table}

@@ -1,0 +1,20 @@
+\begin{table}[t]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}lcccc@{}}
+        \toprule
+        & \multicolumn{2}{c}{\llama (12 runs)} & \multicolumn{2}{c}{\qwen (6 runs)} \\
+        \cmidrule(lr){2-3} \cmidrule(lr){4-5}
+        \textbf{Measure} & \textbf{Reas.\ / patt.} & \textbf{Ratio [95\% CI]} & \textbf{Reas.\ / patt.} & \textbf{Ratio [95\% CI]} \\
+        \midrule
+        \rloss (pre-registered) & 0.637 / 0.434 & 1.47 [1.05, 1.91] & 0.610 / 0.103 & 5.93 [$-12.9$, 32.5] \\
+        \rrel (pre-registered) & 0.286 / 0.251 & 1.14 [0.82, 1.60] & 0.210 / 0.096 & 2.18 [1.08, 3.52] \\
+        \rgain (pre-registered)$^\dagger$ & 0.843 / 0.954 & 0.88 [0.39, 1.56] & 0.505 / 0.399 & 1.27 [$-0.05$, 3.25] \\
+        \absdrop & 0.165 / 0.124 & 1.33 [0.89, 1.90] & 0.157 / 0.060 & 2.60 [1.21, 4.21] \\
+        \rloss clipped to $[0,1]$ (exploratory) & 0.349 / 0.347 & 1.01 [0.82, 1.26] & 0.453 / 0.374 & 1.21 [0.72, 1.95] \\
+        \bottomrule
+    \end{tabular}
+    }
+    \caption{H2: mean forgetting for reasoning and pattern tasks and their ratio, with cluster-bootstrap 95\% intervals over runs. Forgetting is $1 - R$ (or the absolute drop), averaged over all stage-end evaluations with lag $\geq 1$. H2 predicts a ratio in $[3, 5]$. $^\dagger$\tgsm and \tarith are excluded on both models and \tmt on \qwen, because fine-tuning gave no positive gain.}
+    \label{tab:h2_ratio}
+\end{table}

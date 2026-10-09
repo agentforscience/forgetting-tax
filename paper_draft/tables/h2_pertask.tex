@@ -1,0 +1,20 @@
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{@{}llcccccc@{}}
+        \toprule
+        & & \multicolumn{3}{c}{\llama} & \multicolumn{3}{c}{\qwen} \\
+        \cmidrule(lr){3-5} \cmidrule(lr){6-8}
+        \textbf{Task} & \textbf{Cat.} & \absdrop & $1-\rrel$ & $1-\rloss$ & \absdrop & $1-\rrel$ & $1-\rloss$ \\
+        \midrule
+        \tgsm & R & 0.153 & {\bf 0.435} & 0.264 & 0.104 & 0.231 & {\bf 0.954} \\
+        \tarith & R & 0.168 & 0.186 & 0.109 & {\bf 0.282} & {\bf 0.288} & 0.562 \\
+        \tlogic & R & {\bf 0.173} & 0.239 & {\bf 1.536} & 0.084 & 0.111 & 0.313 \\
+        \tmt & P & 0.167 & 0.338 & 0.940 & 0.027 & 0.057 & $-0.044$ \\
+        \tsumm & P & 0.139 & 0.341 & 0.236 & 0.034 & 0.100 & 0.215 \\
+        \temo & P & 0.066 & 0.073 & 0.126 & 0.120 & 0.131 & 0.138 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Per-task forgetting (R = reasoning, P = pattern). Largest forgetting per column in {\bf bold}. Differences between tasks within a category are larger than the difference between categories, and the two models disagree on which tasks are fragile.}
+    \label{tab:h2_pertask}
+\end{table}

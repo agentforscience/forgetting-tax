@@ -1,0 +1,11 @@
+Instruction-tuned language models are updated one task at a time in practice, and each update erodes earlier skills.
+Continual instruction-tuning benchmarks usually summarize this erosion with one end-of-sequence average under one or two task orders, which leaves the shape of forgetting, the role of task type, and the role of learning position unmeasured.
+We test a three-part hypothesis: forgetting follows a power law, reasoning tasks are forgotten 3--5$\times$ faster than pattern-matching tasks, and early-learned tasks are forgotten disproportionately.
+We fine-tune two small models (\llama and \qwen) with LoRA on six tasks in sequence, using a balanced Latin-square order design (18 sequential runs) and held-out loss measured every 25 steps.
+None of the three parts holds as stated.
+Forgetting is not uniform, but it is not a per-task power law either: it arrives as a fast, saturating hit at each task switch.
+On \llama, a median 55\% of a 250-step stage's loss rise is present after 25 steps, and in a step-resolution experiment a saturating exponential beats a power law in 6 of 6 task pairs.
+The reasoning/pattern forgetting ratio is 1.0--1.5 on \llama and 2.2--2.6 on \qwen for metric-based measures, with intervals that do not survive multiple-comparison correction.
+Once the amount of subsequent training is fixed, early-learned tasks are not forgotten more on \llama.
+The specific (old task, new task) pair is the strongest visible determinant of forgetting.
+Our results suggest budgeting forgetting per task switch and per pair, not per training step or per task category.

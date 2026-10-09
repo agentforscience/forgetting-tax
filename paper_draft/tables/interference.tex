@@ -1,0 +1,18 @@
+\begin{table}[t]
+    \centering
+    \small
+    \begin{tabular}{@{}lcccccc@{}}
+        \toprule
+        \textbf{Old $\backslash$ new} & \tgsm & \tarith & \tlogic & \tmt & \tsumm & \temo \\
+        \midrule
+        \tgsm & -- & 0.21 & 0.17 & 0.03 & 0.04 & 0.05 \\
+        \tarith & 0.00 & -- & 0.16 & $-0.05$ & $-0.09$ & 0.14 \\
+        \tlogic & {\bf 1.11} & {\bf 1.63} & -- & $-0.57$ & {\bf 0.91} & $-0.18$ \\
+        \tmt & $-0.01$ & $-0.04$ & 0.14 & -- & {\bf 0.78} & {\bf 0.83} \\
+        \tsumm & $-0.03$ & 0.02 & 0.13 & 0.17 & -- & 0.12 \\
+        \temo & $-0.02$ & 0.19 & 0.04 & 0.02 & 0.02 & -- \\
+        \bottomrule
+    \end{tabular}
+    \caption{Pair structure on \llama: mean loss-based retention (\rloss) lost by an old task (row) during one stage of training on a new task (column). Negative values are recovery. The five largest cells are in {\bf bold}; they carry most of the forgetting.}
+    \label{tab:interference}
+\end{table}

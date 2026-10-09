@@ -1,0 +1,21 @@
+\begin{table}[t]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        & \llama (12 runs) & \qwen (6 runs) \\
+        \midrule
+        Lag-1 forgetting by position 1--5, \rloss clipped & 0.31, 0.21, 0.23, 0.38, 0.20 & 0.55, 0.51, 0.29, 0.23, 0.15 \\
+        Spearman, position vs.\ lag-1 forgetting, \rloss clipped & $\rho = -0.06$, $p = 0.65$ & $\rho = -0.47$, $p = 0.009$ \\
+        Same, \rrel & $\rho = 0.02$, $p = 0.87$ & $\rho = -0.18$, $p = 0.34$ \\
+        Same, \rloss unclipped & $\rho = -0.12$, $p = 0.37$ & $\rho = -0.35$, $p = 0.055$ \\
+        \midrule
+        OLS position coefficient, \rloss clipped [95\% CI] & $-0.001$ [$-0.028$, 0.026] & $-0.073$ [$-0.138$, $-0.009$] \\
+        OLS position coefficient, \rrel [95\% CI] & $-0.019$ [$-0.063$, 0.025] & $-0.019$ [$-0.047$, 0.009] \\
+        OLS $\log(1+\text{lag})$ coefficient, \rrel [95\% CI] & 0.154 [0.015, 0.294] & $-0.039$ [$-0.206$, 0.128] \\
+        \bottomrule
+    \end{tabular}
+    }
+    \caption{H3: effect of serial position with lag held fixed. Spearman correlations use task-demeaned forgetting. A negative position coefficient is the direction H3 predicts (earlier-learned tasks forget more at the same lag). The $p$-values are uncorrected.}
+    \label{tab:h3}
+\end{table}

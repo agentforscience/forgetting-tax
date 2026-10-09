@@ -1,0 +1,26 @@
+\section{Related Work}
+\label{sec:related}
+
+\para{Catastrophic forgetting and continual learning.}
+Sequential training of neural networks overwrites earlier knowledge~\cite{mccloskey1989catastrophic}.
+A large body of work proposes remedies, such as regularizing important weights~\cite{kirkpatrick2017overcoming} or constraining updates with stored examples~\cite{lopezpaz2017gradient}, and summarizes outcomes with average accuracy and backward transfer~\cite{lopezpaz2017gradient}.
+We study the unmitigated case, naive sequential fine-tuning, because it is the standard lower bound and because our question is how forgetting unfolds, not how to prevent it.
+
+\para{Continual instruction tuning of LLMs.}
+Recent benchmarks extend continual learning to instruction-tuned language models~\cite{scialom2022fine,zhang2023citb,wang2023trace,luo2023empirical}.
+These studies establish that forgetting is substantial in this setting and compare mitigation methods across task streams.
+They mostly report end-of-stream aggregates under a small number of fixed task orders.
+Unlike them, we evaluate at sub-stage resolution, vary the order with a balanced design~\cite{williams1949experimental}, and fit functional forms to the trajectories.
+Our use of LoRA~\cite{hu2022lora} follows common practice; \citet{biderman2024lora} compare forgetting under LoRA and full fine-tuning, a comparison that our study does not include.
+
+\para{The time course of forgetting.}
+\citet{delange2023continual} evaluate continually during training and report a transient but large drop on old tasks right after a task switch, which end-of-task evaluation misses.
+Our onset experiment observes a fast drop of the same kind in LoRA instruction tuning, here without recovery inside the stage.
+\citet{ramasesh2021anatomy} relate forgetting to task similarity, which is consistent with the pair-specific structure we find.
+\citet{kotha2024understanding} argue that part of what fine-tuning ``forgets'' is the model's inference of which task it is being asked to perform; our observation that old tasks lose their output \emph{format} after later training fits this reading.
+
+\para{Power laws of forgetting.}
+In human memory research, retention over time is often described by a power function~\cite{wixted1991form}.
+\citet{anderson1997artifactual} show that averaging non-power curves across items or subjects can produce a power-like aggregate.
+We find the same pattern in our data: the power law fits averaged curves on one model while saturating curves fit the individual trajectories.
+We did not test the aggregation account directly.

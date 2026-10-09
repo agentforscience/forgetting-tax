@@ -1,0 +1,176 @@
+{
+ "emotion <- arith": {
+  "old_loss_zero_shot": 2.7819777931628367,
+  "old_loss_after_own_training": 0.14160570630094496,
+  "old_loss_after_100_new_steps": 0.19463343478575598,
+  "loss_increase_100": 0.05302772848481102,
+  "share_of_100step_increase_by_step": {
+   "5": 0.07701767591605488,
+   "10": 0.3688909579880353,
+   "15": 0.6509808933366745,
+   "20": 0.785817945316788,
+   "26": 0.9334146196202665,
+   "50": 1.0464976794388194
+  },
+  "steps_to_50pct_of_forgetting": 12.0,
+  "steps_to_90pct_of_forgetting": 26.0,
+  "steps_to_50pct_of_new_task_learning": 4.0,
+  "steps_to_90pct_of_new_task_learning": 6.0,
+  "best_model": "saturating exp",
+  "daicc": {
+   "linear": 104.3,
+   "power": 52.0,
+   "saturating exp": 0.0,
+   "logarithmic": 33.2
+  },
+  "power_exponent": 0.4433818166219874,
+  "peak_then_recovery": 1.0679977760730852,
+  "increase_steps_10_to_20": 0.022108691082059345,
+  "increase_steps_50_to_100": -0.0024656663204555007
+ },
+ "gsm8k <- arith": {
+  "old_loss_zero_shot": 1.2124628292084207,
+  "old_loss_after_own_training": 0.7145633358622924,
+  "old_loss_after_100_new_steps": 0.8469975942081862,
+  "loss_increase_100": 0.13243425834589384,
+  "share_of_100step_increase_by_step": {
+   "5": 0.024923534412604295,
+   "10": 0.2957083204426229,
+   "15": 0.6976804471988205,
+   "20": 0.8711803710422431,
+   "26": 0.8876533736890841,
+   "50": 0.9012989861910203
+  },
+  "steps_to_50pct_of_forgetting": 13.0,
+  "steps_to_90pct_of_forgetting": 42.0,
+  "steps_to_50pct_of_new_task_learning": 3.0,
+  "steps_to_90pct_of_new_task_learning": 6.0,
+  "best_model": "saturating exp",
+  "daicc": {
+   "linear": 75.6,
+   "power": 31.5,
+   "saturating exp": 0.0,
+   "logarithmic": 17.6
+  },
+  "power_exponent": 0.4472372813409733,
+  "peak_then_recovery": 1.0290893489635133,
+  "increase_steps_10_to_20": 0.07621221421995139,
+  "increase_steps_50_to_100": 0.013071395561780053
+ },
+ "logic <- arith": {
+  "old_loss_zero_shot": 0.7777887558937073,
+  "old_loss_after_own_training": 0.3505046725273132,
+  "old_loss_after_100_new_steps": 1.3780957370996476,
+  "loss_increase_100": 1.0275910645723343,
+  "share_of_100step_increase_by_step": {
+   "5": 0.21672139497775167,
+   "10": 0.5965365624181008,
+   "15": 0.7993187505728825,
+   "20": 0.9010346086828382,
+   "26": 0.9581737641604497,
+   "50": 1.008902175534798
+  },
+  "steps_to_50pct_of_forgetting": 9.0,
+  "steps_to_90pct_of_forgetting": 20.0,
+  "steps_to_50pct_of_new_task_learning": 4.0,
+  "steps_to_90pct_of_new_task_learning": 6.0,
+  "best_model": "saturating exp",
+  "daicc": {
+   "linear": 149.0,
+   "power": 74.9,
+   "saturating exp": 0.0,
+   "logarithmic": 54.7
+  },
+  "power_exponent": 0.3383428669952804,
+  "peak_then_recovery": 1.0221422560220699,
+  "increase_steps_10_to_20": 0.3128994715213774,
+  "increase_steps_50_to_100": -0.00914779603481275
+ },
+ "logic <- gsm8k": {
+  "old_loss_zero_shot": 0.7777887558937073,
+  "old_loss_after_own_training": 0.33157730877399444,
+  "old_loss_after_100_new_steps": 1.1067779111862182,
+  "loss_increase_100": 0.7752006024122238,
+  "share_of_100step_increase_by_step": {
+   "5": 0.09002246355993256,
+   "10": 0.2944902195808572,
+   "15": 0.49876378778749986,
+   "20": 0.8085801826727934,
+   "26": 0.9817258636812617,
+   "50": 0.996919220379695
+  },
+  "steps_to_50pct_of_forgetting": 16.0,
+  "steps_to_90pct_of_forgetting": 24.0,
+  "steps_to_50pct_of_new_task_learning": 6.0,
+  "steps_to_90pct_of_new_task_learning": 26.0,
+  "best_model": "saturating exp",
+  "daicc": {
+   "linear": 82.1,
+   "power": 38.4,
+   "saturating exp": 0.0,
+   "logarithmic": 22.7
+  },
+  "power_exponent": 0.47935661968952675,
+  "peak_then_recovery": 1.1269112182393732,
+  "increase_steps_10_to_20": 0.39852284908294683,
+  "increase_steps_50_to_100": 0.0023882222175597434
+ },
+ "mt <- summ": {
+  "old_loss_zero_shot": 1.5491610971899181,
+  "old_loss_after_own_training": 1.2912699081657033,
+  "old_loss_after_100_new_steps": 1.431207995038746,
+  "loss_increase_100": 0.13993808687304266,
+  "share_of_100step_increase_by_step": {
+   "5": -0.018835931137517335,
+   "10": 0.0828138271369394,
+   "15": 0.29296128592190873,
+   "20": 0.4678666730006579,
+   "26": 0.5978434495807122,
+   "50": 0.845583992161621
+  },
+  "steps_to_50pct_of_forgetting": 22.0,
+  "steps_to_90pct_of_forgetting": 70.0,
+  "steps_to_50pct_of_new_task_learning": 5.0,
+  "steps_to_90pct_of_new_task_learning": 22.0,
+  "best_model": "saturating exp",
+  "daicc": {
+   "linear": 40.6,
+   "power": 21.0,
+   "saturating exp": 0.0,
+   "logarithmic": 7.0
+  },
+  "power_exponent": 0.7182205629653123,
+  "peak_then_recovery": 1.1100329005413172,
+  "increase_steps_10_to_20": 0.05388355859518934,
+  "increase_steps_50_to_100": 0.021608680719475526
+ },
+ "summ <- mt": {
+  "old_loss_zero_shot": 2.471457578906699,
+  "old_loss_after_own_training": 1.3404582888173309,
+  "old_loss_after_100_new_steps": 1.5113285259011604,
+  "loss_increase_100": 0.17087023708382953,
+  "share_of_100step_increase_by_step": {
+   "5": -0.01664750548974593,
+   "10": 0.00816686987848733,
+   "15": 0.3386351898598194,
+   "20": 0.9393120161314025,
+   "26": 1.1118531743274571,
+   "50": 1.0047360361979083
+  },
+  "steps_to_50pct_of_forgetting": 17.0,
+  "steps_to_90pct_of_forgetting": 20.0,
+  "steps_to_50pct_of_new_task_learning": 4.0,
+  "steps_to_90pct_of_new_task_learning": 34.0,
+  "best_model": "saturating exp",
+  "daicc": {
+   "linear": 32.2,
+   "power": 15.0,
+   "saturating exp": 0.0,
+   "logarithmic": 7.7
+  },
+  "power_exponent": 0.5342298856195352,
+  "peak_then_recovery": 1.1119451425044167,
+  "increase_steps_10_to_20": 0.15910499189969274,
+  "increase_steps_50_to_100": -0.0008092476279741856
+ }
+}
